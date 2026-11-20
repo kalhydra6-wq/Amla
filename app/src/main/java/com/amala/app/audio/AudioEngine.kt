@@ -48,10 +48,12 @@ class AudioEngine {
 
     /** Real band frequencies reported by the device, with a sensible fallback. */
     fun frequencies(): List<Int> = (0 until bandCount).map { index ->
-        runCatching { equalizer?.getBand(index.toShort()) }
-            .getOrNull()
-            ?.takeIf { it > 0 }
-            ?: fallbackFrequency(index, bandCount)
+        val frequency = try {
+            equalizer?.getBand(index.toShort())
+        } catch (ex: Exception) {
+            null
+        }
+        if (frequency != null && frequency > 0) frequency else fallbackFrequency(index, bandCount)
     }
 
     fun apply(profile: EqualizerProfile) {

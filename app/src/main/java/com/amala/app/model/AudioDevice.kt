@@ -48,7 +48,6 @@ object AudioDevices {
         AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
         AudioDeviceInfo.TYPE_BLE_HEADSET,
         AudioDeviceInfo.TYPE_BLE_SPEAKER,
-        AudioDeviceInfo.TYPE_BLE_HEARING_AID,
         AudioDeviceInfo.TYPE_BLE_BROADCAST -> DeviceCategory.BLUETOOTH
 
         AudioDeviceInfo.TYPE_USB_DEVICE,
@@ -69,7 +68,6 @@ object AudioDevices {
         AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth SCO"
         AudioDeviceInfo.TYPE_BLE_HEADSET -> "LE Audio headset"
         AudioDeviceInfo.TYPE_BLE_SPEAKER -> "LE Audio speaker"
-        AudioDeviceInfo.TYPE_BLE_HEARING_AID -> "LE hearing aid"
         AudioDeviceInfo.TYPE_BLE_BROADCAST -> "LE Audio broadcast"
         AudioDeviceInfo.TYPE_USB_DEVICE -> "USB audio device"
         AudioDeviceInfo.TYPE_USB_HEADSET -> "USB headset"
