@@ -86,6 +86,24 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
             }
         }
 
+        if (ui.isRealme) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Realme / Dirac sound", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Your phone has Realme's built-in Dirac sound effect. Android turns off " +
+                                "third-party global EQ while a per-app effect is active. Open " +
+                                "Settings → Sound & vibration → Real Sound / Sound effects and switch it " +
+                                "OFF (choose 'Original'). Also turn off any equalizer or bass boost inside " +
+                                "your music app, then tap Reinitialize above.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {

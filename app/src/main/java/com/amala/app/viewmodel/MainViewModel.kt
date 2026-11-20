@@ -1,6 +1,7 @@
 package com.amala.app.viewmodel
 
 import android.app.Application
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.amala.app.audio.AudioController
@@ -35,6 +36,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val engineStatus: AudioEngine.Status? = null,
         val bassBoostSupported: Boolean = false,
         val virtualizerSupported: Boolean = false,
+        val isRealme: Boolean = false,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
         val message: String? = null,
     )
@@ -54,6 +56,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             engineStatus = AudioController.status(),
             bassBoostSupported = AudioController.bassBoostSupported,
             virtualizerSupported = AudioController.virtualizerSupported,
+            isRealme = Build.MANUFACTURER.equals("realme", ignoreCase = true),
             bandCount = AudioController.bandCount,
             minLevel = AudioController.minLevel,
             maxLevel = AudioController.maxLevel,
