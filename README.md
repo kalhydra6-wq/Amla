@@ -70,7 +70,31 @@ cd Amla
 3. `./gradlew assembleDebug`
 4. Uploads `amla-debug-apk` as a workflow artifact
 
-Download the APK from the **Actions → Android CI → Artifacts** section.
+Download the APKs from the **Actions → Android CI → Artifacts** section:
+
+- `amla-debug-apk` — unsigned debug build
+- `amla-release-signed-apk` — **signed release build**, ready to install
+
+## Release signing
+
+- Keystore: `app/amla-release.jks` (RSA 2048, alias `amla`, valid until 2054)
+- Certificate: `CN=Amala, OU=Amala, O=Amala, L=Surat, ST=Gujarat, C=IN`
+- Passwords are **not in source** — they are GitHub Secrets:
+  `AMLA_STORE_PASSWORD`, `AMLA_KEY_PASSWORD`, `AMLA_KEY_ALIAS`
+- CI uses those secrets to produce the signed `app-release.apk`.
+
+To build a signed APK locally, export the variables first:
+
+```bash
+export AMLA_STORE_PASSWORD='...'
+export AMLA_KEY_PASSWORD='...'
+export AMLA_KEY_ALIAS='amla'
+./gradlew assembleRelease
+```
+
+Alternatively put `amla.storePassword`, `amla.keyPassword` and `amla.keyAlias`
+in an untracked `local.properties`/`gradle.properties` file. Keep the keystore
+and passwords safe: whoever has both can sign updates that replace your app.
 
 ## Notes
 

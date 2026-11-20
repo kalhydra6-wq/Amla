@@ -28,6 +28,9 @@ render.experimental.xml
 *.jks
 *.keystore
 
+# Amla's release signing keystore is committed intentionally (passwords live in GitHub Secrets)
+!app/amla-release.jks
+
 # Google Services (e.g. APIs or Firebase)
 google-services.json
 

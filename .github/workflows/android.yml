@@ -12,8 +12,12 @@ permissions:
 
 jobs:
   build:
-    name: Unit tests + debug APK
+    name: Unit tests + signed APKs
     runs-on: ubuntu-latest
+    env:
+      AMLA_STORE_PASSWORD: ${{ secrets.AMLA_STORE_PASSWORD }}
+      AMLA_KEY_PASSWORD: ${{ secrets.AMLA_KEY_PASSWORD }}
+      AMLA_KEY_ALIAS: ${{ secrets.AMLA_KEY_ALIAS }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v5
@@ -59,4 +63,22 @@ jobs:
         with:
           name: amla-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Build signed release APK
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew assembleRelease --no-daemon --stacktrace; then
+              exit 0
+            fi
+            echo "Release build attempt $attempt failed; retrying in 20s..."
+            sleep 20
+          done
+          exit 1
+
+      - name: Upload signed release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: amla-release-signed-apk
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error

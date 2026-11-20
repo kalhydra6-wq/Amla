@@ -19,8 +19,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("amla-release.jks")
+            storePassword = providers.environmentVariable("AMLA_STORE_PASSWORD")
+                .orElse(providers.gradleProperty("amla.storePassword"))
+                .orNull ?: ""
+            keyAlias = providers.environmentVariable("AMLA_KEY_ALIAS")
+                .orElse(providers.gradleProperty("amla.keyAlias"))
+                .orNull ?: "amla"
+            keyPassword = providers.environmentVariable("AMLA_KEY_PASSWORD")
+                .orElse(providers.gradleProperty("amla.keyPassword"))
+                .orNull ?: ""
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
