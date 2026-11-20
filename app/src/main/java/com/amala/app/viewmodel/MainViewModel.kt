@@ -3,6 +3,7 @@ package com.amala.app.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.amala.app.audio.AudioController
 import com.amala.app.audio.AudioDeviceDetector
 import com.amala.app.audio.AudioEngine
 import com.amala.app.data.AmlaPreferences
@@ -31,7 +32,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val frequencies: List<Int> = listOf(60, 230, 910, 3_600, 14_000),
         val autoApply: Boolean = true,
         val effectsEnabled: Boolean = true,
-        val engineReady: Boolean = false,
+        val engineStatus: AudioEngine.Status? = null,
         val bassBoostSupported: Boolean = false,
         val virtualizerSupported: Boolean = false,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
@@ -39,7 +40,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     private val preferences = AmlaPreferences(SharedPreferencesStore(application))
-    private val engine = AudioEngine()
     private var detector: AudioDeviceDetector? = null
     private var manuallySelected = false
     private var lastAppliedDeviceId: String? = null
@@ -48,19 +48,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     init {
-        val ready = engine.initialize()
         _ui.value = UiState(
             autoApply = preferences.autoApply,
-            effectsEnabled = preferences.effectsEnabled,
-            engineReady = ready,
-            bassBoostSupported = engine.bassBoostSupported,
-            virtualizerSupported = engine.virtualizerSupported,
-            bandCount = engine.bandCount,
-            minLevel = engine.minLevel,
-            maxLevel = engine.maxLevel,
-            frequencies = engine.frequencies(),
-            profile = ProfileMath.levels(Preset.FLAT, engine.bandCount, engine.minLevel, engine.maxLevel)
-                .let { EqualizerProfile(Preset.FLAT, it) },
+            effectsEnabled = AudioController.enabled,
+            engineStatus = AudioController.status(),
+            bassBoostSupported = AudioController.bassBoostSupported,
+            virtualizerSupported = AudioController.virtualizerSupported,
+            bandCount = AudioController.bandCount,
+            minLevel = AudioController.minLevel,
+            maxLevel = AudioController.maxLevel,
+            frequencies = AudioController.frequencies(),
+            profile = AudioController.profile,
             storedProfiles = preferences.storedProfiles(),
         )
 
@@ -78,15 +76,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val target = selected ?: active
         val profile = target?.let { device ->
             val stored = preferences.loadProfile(device.id)
-                ?: ProfileMath.defaultFor(device.category, engine.bandCount, engine.minLevel, engine.maxLevel)
-            ProfileMath.fit(stored, engine.bandCount, engine.minLevel, engine.maxLevel)
+                ?: ProfileMath.defaultFor(device.category, AudioController.bandCount, AudioController.minLevel, AudioController.maxLevel)
+            ProfileMath.fit(stored, AudioController.bandCount, AudioController.minLevel, AudioController.maxLevel)
         } ?: _ui.value.profile
 
         if (target?.id != lastAppliedDeviceId) {
             lastAppliedDeviceId = target?.id
             preferences.lastDeviceId = active?.id
             if (_ui.value.autoApply && target != null) {
-                engine.apply(profile.copy(enabled = _ui.value.effectsEnabled))
+                AudioController.applyLoaded(profile)
             }
         }
 
@@ -96,13 +94,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 activeDevice = active,
                 selectedDevice = selected,
                 profile = profile,
-                bandCount = engine.bandCount,
-                minLevel = engine.minLevel,
-                maxLevel = engine.maxLevel,
-                frequencies = engine.frequencies(),
-                bassBoostSupported = engine.bassBoostSupported,
-                virtualizerSupported = engine.virtualizerSupported,
-                engineReady = engine.ready,
+                bandCount = AudioController.bandCount,
+                minLevel = AudioController.minLevel,
+                maxLevel = AudioController.maxLevel,
+                frequencies = AudioController.frequencies(),
+                engineStatus = AudioController.status(),
+                bassBoostSupported = AudioController.bassBoostSupported,
+                virtualizerSupported = AudioController.virtualizerSupported,
             )
         }
     }
@@ -111,10 +109,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         manuallySelected = true
         lastAppliedDeviceId = null
         val stored = preferences.loadProfile(device.id)
-            ?: ProfileMath.defaultFor(device.category, engine.bandCount, engine.minLevel, engine.maxLevel)
-        val profile = ProfileMath.fit(stored, engine.bandCount, engine.minLevel, engine.maxLevel)
+            ?: ProfileMath.defaultFor(device.category, AudioController.bandCount, AudioController.minLevel, AudioController.maxLevel)
         _ui.update { it.copy(selectedDevice = device) }
-        commit(profile.copy(enabled = _ui.value.effectsEnabled))
+        commit(stored)
         setMessage("Viewing ${device.displayName}")
     }
 
@@ -149,9 +146,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setEffectsEnabled(enabled: Boolean) {
-        preferences.effectsEnabled = enabled
-        _ui.update { it.copy(effectsEnabled = enabled) }
-        engine.apply(_ui.value.profile.copy(enabled = enabled))
+        AudioController.setEnabled(enabled)
+        _ui.update { it.copy(effectsEnabled = enabled, engineStatus = AudioController.status()) }
         setMessage(if (enabled) "Equalizer enabled" else "Equalizer bypassed")
     }
 
@@ -173,8 +169,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetProfile() {
         val device = _ui.value.selectedDevice ?: return
         preferences.deleteProfile(device.id)
-        val default = ProfileMath.defaultFor(device.category, engine.bandCount, engine.minLevel, engine.maxLevel)
-        commit(default)
+        commit(
+            ProfileMath.defaultFor(
+                device.category,
+                AudioController.bandCount,
+                AudioController.minLevel,
+                AudioController.maxLevel,
+            ),
+        )
         setMessage("Default profile restored")
     }
 
@@ -195,7 +197,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             manuallySelected = true
             _ui.update { it.copy(selectedDevice = device) }
         }
-        commit(ProfileMath.fit(profile, engine.bandCount, engine.minLevel, engine.maxLevel))
+        commit(profile)
         setMessage("Profile loaded")
     }
 
@@ -205,20 +207,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun reinitializeEffects() {
-        val ready = engine.initialize()
+        AudioController.reinitialize()
         _ui.update {
             it.copy(
-                engineReady = ready,
-                bandCount = engine.bandCount,
-                minLevel = engine.minLevel,
-                maxLevel = engine.maxLevel,
-                frequencies = engine.frequencies(),
-                bassBoostSupported = engine.bassBoostSupported,
-                virtualizerSupported = engine.virtualizerSupported,
+                bandCount = AudioController.bandCount,
+                minLevel = AudioController.minLevel,
+                maxLevel = AudioController.maxLevel,
+                frequencies = AudioController.frequencies(),
+                engineStatus = AudioController.status(),
+                bassBoostSupported = AudioController.bassBoostSupported,
+                virtualizerSupported = AudioController.virtualizerSupported,
             )
         }
-        engine.apply(_ui.value.profile.copy(enabled = _ui.value.effectsEnabled))
-        setMessage(if (ready) "Audio effects reinitialized" else "Audio effects are unavailable on this device")
+        setMessage(AudioController.status().detail)
     }
 
     fun clearMessage() {
@@ -228,9 +229,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun commit(profile: EqualizerProfile) {
         val enabledProfile = profile.copy(enabled = true)
         _ui.update { it.copy(profile = enabledProfile) }
-        engine.apply(enabledProfile.copy(enabled = _ui.value.effectsEnabled))
-        _ui.value.selectedDevice?.let { preferences.saveProfile(it.id, enabledProfile) }
-        _ui.update { it.copy(storedProfiles = preferences.storedProfiles()) }
+        AudioController.setProfile(enabledProfile, _ui.value.selectedDevice?.id)
+        _ui.update {
+            it.copy(
+                storedProfiles = preferences.storedProfiles(),
+                engineStatus = AudioController.status(),
+            )
+        }
     }
 
     private fun setMessage(message: String) {
@@ -239,7 +244,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         detector?.stop()
-        engine.release()
         super.onCleared()
     }
 

@@ -152,10 +152,11 @@ private fun MasterCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     onCheckedChange = { viewModel.setEffectsEnabled(it) },
                 )
             }
-            if (!ui.engineReady) {
+            val status = ui.engineStatus
+            if (status != null && (!status.ready || !status.hasControl)) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Audio effects are unavailable on this device. Some phones disable global effects; try Reinitialize in Settings.",
+                    text = status.detail,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.error,
                 )

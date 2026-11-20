@@ -49,12 +49,19 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Audio engine", style = MaterialTheme.typography.titleMedium)
+                    val status = ui.engineStatus
                     Text(
-                        text = if (ui.engineReady) {
-                            "Active · ${ui.bandCount} bands · ${ui.minLevel / 100} to ${ui.maxLevel / 100} dB"
+                        text = status?.detail ?: "Checking audio engine…",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (status?.ready == true && status.hasControl) {
+                            MaterialTheme.colorScheme.primary
                         } else {
-                            "Unavailable on this device"
+                            MaterialTheme.colorScheme.error
                         },
+                    )
+                    Text(
+                        text = "${ui.bandCount} bands · ${ui.minLevel / 100} to ${ui.maxLevel / 100} dB · " +
+                            "app sessions: ${status?.attachedSessions ?: 0}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -64,6 +71,14 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (status?.hasControl == false) {
+                        Text(
+                            text = "Close any other equalizer app, then tap Reinitialize. Amla uses a higher " +
+                                "priority so it can take control of the system equalizer.",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Button(onClick = { viewModel.reinitializeEffects() }) {
                         Text("Reinitialize effects")
                     }

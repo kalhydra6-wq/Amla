@@ -1,5 +1,6 @@
 package com.amala.app.audio
 
+import android.media.audiofx.AudioEffect
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
 import android.media.audiofx.Virtualizer
@@ -7,14 +8,23 @@ import com.amala.app.model.EqualizerProfile
 import kotlin.math.pow
 
 /**
- * Wraps Android's audio effects. Session 0 attaches the effects to the global
- * output mix so they apply to every app (music, video, games, navigation, ...)
- * rather than to a single audio session.
+ * Wraps Android's audio effects. Session 0 targets the global output mix so the
+ * EQ applies to all apps. A priority above 0 is used so Amla takes control of
+ * the effect engine when another application currently owns it.
  */
 class AudioEngine {
 
+    data class Status(
+        val ready: Boolean,
+        val hasControl: Boolean,
+        val enabled: Boolean,
+        val attachedSessions: Int,
+        val detail: String,
+    )
+
     companion object {
         private const val GLOBAL_SESSION = 0
+        private const val EFFECT_PRIORITY = 10
         private const val DEFAULT_BANDS = 5
         private const val DEFAULT_MIN = -15_000
         private const val DEFAULT_MAX = 15_000
@@ -23,6 +33,7 @@ class AudioEngine {
     private var equalizer: Equalizer? = null
     private var bassBoost: BassBoost? = null
     private var virtualizer: Virtualizer? = null
+    private val sessionEqualizers = mutableMapOf<Int, Equalizer>()
 
     val ready: Boolean get() = equalizer != null
     val bassBoostSupported: Boolean get() = bassBoost != null
@@ -37,12 +48,12 @@ class AudioEngine {
     val maxLevel: Int
         get() = equalizer?.bandLevelRange?.getOrNull(1)?.toInt() ?: DEFAULT_MAX
 
-    /** Initializes all supported effects. Each effect is independent so one failure is not fatal. */
+    /** Initializes global effects. Each effect is independent so one failure is not fatal. */
     fun initialize(): Boolean {
         release()
-        equalizer = runCatching { Equalizer(GLOBAL_SESSION, GLOBAL_SESSION) }.getOrNull()
-        bassBoost = runCatching { BassBoost(GLOBAL_SESSION, GLOBAL_SESSION) }.getOrNull()
-        virtualizer = runCatching { Virtualizer(GLOBAL_SESSION, GLOBAL_SESSION) }.getOrNull()
+        equalizer = runCatching { Equalizer(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
+        bassBoost = runCatching { BassBoost(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
+        virtualizer = runCatching { Virtualizer(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
         return ready
     }
 
@@ -57,54 +68,72 @@ class AudioEngine {
     }
 
     fun apply(profile: EqualizerProfile) {
-        val eq = equalizer ?: return
-        runCatching { eq.enabled = profile.enabled }
-
-        if (!profile.enabled) {
-            runCatching {
-                bassBoost?.enabled = false
-                virtualizer?.enabled = false
-            }
-            return
-        }
-
-        val min = minLevel.toShort()
-        val max = maxLevel.toShort()
-        for (index in 0 until bandCount) {
-            val level = (profile.bands.getOrNull(index) ?: 0).toShort().coerceIn(min, max)
-            runCatching { eq.setBandLevel(index.toShort(), level) }
-        }
-
-        val bass = profile.bassBoost.coerceIn(0, 1_000)
-        runCatching {
-            bassBoost?.enabled = bass > 0
-            if (bass > 0) bassBoost?.setStrength(bass.toShort())
-        }
-
-        val surround = profile.virtualizer.coerceIn(0, 1_000)
-        runCatching {
-            virtualizer?.enabled = surround > 0
-            if (surround > 0) virtualizer?.setStrength(surround.toShort())
-        }
+        equalizer?.let { applyToEffect(it, profile) }
+        sessionEqualizers.values.forEach { effect -> applyToEffect(effect, profile) }
+        applyAuxiliaryEffects(profile)
     }
 
-    fun previewBand(index: Int, level: Int) {
-        val eq = equalizer ?: return
-        runCatching {
-            eq.setBandLevel(
-                index.toShort(),
-                level.toShort().coerceIn(minLevel.toShort(), maxLevel.toShort()),
-            )
+    /** Attaches the EQ to a media app's own audio session (effect-control intent). */
+    fun attachSession(sessionId: Int, profile: EqualizerProfile) {
+        if (sessionId == GLOBAL_SESSION) return
+        val effect = sessionEqualizers[sessionId] ?: runCatching {
+            Equalizer(EFFECT_PRIORITY, sessionId)
+        }.getOrNull() ?: return
+        sessionEqualizers[sessionId] = effect
+        applyToEffect(effect, profile)
+    }
+
+    fun detachSession(sessionId: Int) {
+        sessionEqualizers.remove(sessionId)?.let { runCatching { it.release() } }
+    }
+
+    fun status(): Status {
+        val eq = equalizer
+        val hasControl = eq?.let { runCatching { it.hasControl() }.getOrDefault(false) } ?: false
+        val isEnabled = eq?.let { runCatching { it.enabled }.getOrDefault(false) } ?: false
+        val detail = when {
+            eq == null -> "Effect engine unavailable on this device"
+            !hasControl -> "Another app controls the equalizer — close it and reinitialize"
+            !isEnabled -> "Equalizer is bypassed"
+            sessionEqualizers.isNotEmpty() -> "Active · ${sessionEqualizers.size} app session(s) attached"
+            else -> "Active · global output mix"
         }
+        return Status(eq != null, hasControl, isEnabled, sessionEqualizers.size, detail)
     }
 
     fun release() {
         runCatching { equalizer?.release() }
         runCatching { bassBoost?.release() }
         runCatching { virtualizer?.release() }
+        sessionEqualizers.values.forEach { runCatching { it.release() } }
+        sessionEqualizers.clear()
         equalizer = null
         bassBoost = null
         virtualizer = null
+    }
+
+    private fun applyToEffect(effect: Equalizer, profile: EqualizerProfile) {
+        runCatching { effect.setEnabled(profile.enabled) }
+        if (!profile.enabled) return
+        val min = minLevel.toShort()
+        val max = maxLevel.toShort()
+        for (index in 0 until bandCount) {
+            val level = (profile.bands.getOrNull(index) ?: 0).toShort().coerceIn(min, max)
+            runCatching { effect.setBandLevel(index.toShort(), level) }
+        }
+    }
+
+    private fun applyAuxiliaryEffects(profile: EqualizerProfile) {
+        val bass = profile.bassBoost.coerceIn(0, 1_000)
+        runCatching {
+            bassBoost?.setEnabled(profile.enabled && bass > 0)
+            if (profile.enabled && bass > 0) bassBoost?.setStrength(bass.toShort())
+        }
+        val surround = profile.virtualizer.coerceIn(0, 1_000)
+        runCatching {
+            virtualizer?.setEnabled(profile.enabled && surround > 0)
+            if (profile.enabled && surround > 0) virtualizer?.setStrength(surround.toShort())
+        }
     }
 
     private fun fallbackFrequency(index: Int, count: Int): Int {
