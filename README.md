@@ -28,8 +28,12 @@ own audio stack, so the sliders correspond to real hardware bands.
 - **Profile manager** — apply, inspect and delete saved profiles
 - **Settings** — toggle auto-detect, reinitialize effects, inspect detected hardware
 - **Material 3 UI** with light/dark themes and a custom launcher icon
-- **Global effects** — session 0 attaches the effects to the output mix, so EQ applies
-  to music, video, games and navigation, not just one app
+- **Global effects with control takeover** — effects are created at priority 10 on
+  session 0 so Amla can take control of the system EQ instead of being silently ignored
+- **Per-app session fallback** — listens for `OPEN/CLOSE_AUDIO_EFFECT_CONTROL_SESSION`
+  broadcasts from music players and attaches the EQ to those sessions too
+- **Live engine diagnostics** — Settings shows whether Amla actually controls the
+  effect engine, how many app sessions are attached, and why audio may be bypassed
 
 ## Architecture
 
@@ -68,10 +72,17 @@ Download the APK from the **Actions → Android CI → Artifacts** section.
 
 ## Notes
 
-- Some phone manufacturers restrict global audio effects. If audio does not change,
-  open **Settings → Reinitialize effects** and check the device's sound settings.
-- Android only allows one active global EQ at a time. Amla yields to other EQ apps
-  that hold the effect, and reports effects as unavailable in that case.
+- Android only allows one app to control the global EQ. Amla requests priority 10,
+  but if another equalizer app or the vendor's sound engine still owns it, close
+  that app and use **Settings → Reinitialize effects**. The status line on the
+  Settings screen says exactly which case you are in.
+- If the status says "Active" but audio still does not change, the device's audio
+  policy is bypassing session 0. Amla then relies on the per-app session fallback,
+  which only works with players that broadcast the effect-control intent. Some
+  manufacturers (notably certain Chinese skins) disable this entirely — in that
+  case no third-party app can EQ system audio without root/ADB system privileges.
+- Test with a music app, not a voice call: Bluetooth SCO and telephony paths bypass
+  the music output mix.
 - No account, network access or Bluetooth permission is required at runtime on
   Android 12+; device discovery uses the audio framework only.
 
