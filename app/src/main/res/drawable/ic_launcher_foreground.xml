@@ -4,13 +4,50 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- branch -->
     <path
-        android:fillColor="#5EEAD4"
-        android:pathData="M30,48h10v32H30z" />
+        android:pathData="M60,10 C58,26 56,38 53,52"
+        android:strokeColor="#8B6B3E"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+
+    <!-- leaves -->
     <path
-        android:fillColor="#60A5FA"
-        android:pathData="M49,26h10v54H49z" />
+        android:pathData="M50,30 C34,12 14,16 10,30 C24,40 40,40 50,30 Z"
+        android:fillColor="#3E8C30" />
     <path
-        android:fillColor="#A78BFA"
-        android:pathData="M68,39h10v41H68z" />
+        android:pathData="M56,28 C68,10 90,12 98,26 C82,36 66,38 56,28 Z"
+        android:fillColor="#2F7A2B" />
+    <path
+        android:pathData="M50,44 C34,34 18,42 16,56 C30,56 42,52 50,44 Z"
+        android:fillColor="#4F9A33" />
+
+    <!-- amla berries, back to front -->
+    <path
+        android:pathData="M36,58 a18,18 0 1,0 36,0 a18,18 0 1,0 -36,0"
+        android:fillColor="#8FC23A"
+        android:strokeColor="#5E7A28"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M15,72 a20,20 0 1,0 40,0 a20,20 0 1,0 -40,0"
+        android:fillColor="#A3CC46"
+        android:strokeColor="#5E7A28"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M51,72 a21,21 0 1,0 42,0 a21,21 0 1,0 -42,0"
+        android:fillColor="#9BC840"
+        android:strokeColor="#5E7A28"
+        android:strokeWidth="1.5" />
+    <path
+        android:pathData="M35,86 a19,19 0 1,0 38,0 a19,19 0 1,0 -38,0"
+        android:fillColor="#A3CC46"
+        android:strokeColor="#5E7A28"
+        android:strokeWidth="1.5" />
+
+    <!-- highlights -->
+    <path
+        android:pathData="M24,65 a6,3.5 0 1,0 12,0 a6,3.5 0 1,0 -12,0"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.7" />
 </vector>

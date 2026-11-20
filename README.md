@@ -1,5 +1,7 @@
 # Amla
 
+![Amla logo](assets/amla-logo.png)
+
 **A professional, automatic equalizer for Android audio outputs.**
 
 Amla detects what you are listening through — Bluetooth / LE Audio headphones,
