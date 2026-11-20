@@ -49,7 +49,7 @@ class AudioEngine {
     /** Real band frequencies reported by the device, with a sensible fallback. */
     fun frequencies(): List<Int> = (0 until bandCount).map { index ->
         val frequency = try {
-            equalizer?.getBand(index.toShort())
+            equalizer?.getCenterFreq(index.toShort())
         } catch (ex: Exception) {
             null
         }
