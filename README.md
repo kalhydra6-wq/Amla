@@ -40,6 +40,9 @@ own audio stack, so the sliders correspond to real hardware bands.
   broadcasts from music players and attaches the EQ to those sessions too
 - **Live engine diagnostics** — Settings shows whether Amla actually controls the
   effect engine, how many app sessions are attached, and why audio may be bypassed
+- **Background keep-alive service** — stays active while other apps play, checks
+  every 5 seconds and reapplies the EQ if another player resets or takes over the
+  effect. Toggle it in Settings. Shows a persistent notification.
 
 ## Architecture
 

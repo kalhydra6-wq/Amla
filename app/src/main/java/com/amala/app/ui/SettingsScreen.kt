@@ -37,6 +37,11 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         checked = ui.autoApply,
                     ) { viewModel.setAutoApply(it) }
                     SettingRow(
+                        title = "Keep EQ active in background",
+                        subtitle = "Reapplies your sound when other apps change it, so it works across all players",
+                        checked = ui.keepAlive,
+                    ) { viewModel.setKeepAlive(it) }
+                    SettingRow(
                         title = "Enable audio effects",
                         subtitle = "Bypass or engage the equalizer instantly",
                         checked = ui.effectsEnabled,

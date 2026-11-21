@@ -83,6 +83,11 @@ object AudioController {
         applyCurrent()
     }
 
+    /** Reapplies the current profile without changing what is saved. */
+    fun refresh() {
+        applyCurrent()
+    }
+
     fun release() {
         engine.release()
     }

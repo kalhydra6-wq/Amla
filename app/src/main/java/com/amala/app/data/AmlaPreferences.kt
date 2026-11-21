@@ -15,6 +15,10 @@ class AmlaPreferences(private val store: KeyValueStore) {
         get() = store.getBoolean(KEY_EFFECTS_ENABLED, true)
         set(value) = store.putBoolean(KEY_EFFECTS_ENABLED, value)
 
+    var keepAlive: Boolean
+        get() = store.getBoolean(KEY_KEEP_ALIVE, true)
+        set(value) = store.putBoolean(KEY_KEEP_ALIVE, value)
+
     var lastDeviceId: String?
         get() = store.getString(KEY_LAST_DEVICE, null)
         set(value) {
@@ -76,6 +80,7 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val PROFILE_PREFIX = "profile:"
         private const val KEY_AUTO_APPLY = "setting:auto_apply"
         private const val KEY_EFFECTS_ENABLED = "setting:effects_enabled"
+        private const val KEY_KEEP_ALIVE = "setting:keep_alive"
         private const val KEY_LAST_DEVICE = "last_device_id"
     }
 }

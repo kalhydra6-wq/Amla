@@ -2,6 +2,7 @@ package com.amala.app.viewmodel
 
 import android.app.Application
 import android.os.Build
+import com.amala.app.audio.AmlaAudioService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.amala.app.audio.AudioController
@@ -39,6 +40,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val loudnessSupported: Boolean = false,
         val reverbSupported: Boolean = false,
         val isRealme: Boolean = false,
+        val keepAlive: Boolean = true,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
         val message: String? = null,
     )
@@ -61,6 +63,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             loudnessSupported = AudioController.loudnessSupported,
             reverbSupported = AudioController.reverbSupported,
             isRealme = Build.MANUFACTURER.equals("realme", ignoreCase = true),
+            keepAlive = preferences.keepAlive,
             bandCount = AudioController.bandCount,
             minLevel = AudioController.minLevel,
             maxLevel = AudioController.maxLevel,
@@ -216,6 +219,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         commit(profile)
         setMessage("Profile loaded")
+    }
+
+    fun setKeepAlive(enabled: Boolean) {
+        preferences.keepAlive = enabled
+        _ui.update { it.copy(keepAlive = enabled) }
+        if (enabled) {
+            AmlaAudioService.start(getApplication())
+            setMessage("Amla will keep EQ active across apps")
+        } else {
+            AmlaAudioService.stop(getApplication())
+            setMessage("Background service stopped")
+        }
     }
 
     fun refreshDevices() {
