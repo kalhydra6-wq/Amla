@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.amala.app.model.DeviceCategory
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
+import com.amala.app.model.ReverbPreset
 import com.amala.app.viewmodel.MainViewModel
 
 @Composable
@@ -242,7 +243,34 @@ private fun ExtrasCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                 value = ui.profile.virtualizer,
                 enabled = ui.virtualizerSupported,
             ) { viewModel.setVirtualizer(it) }
-            if (!ui.bassBoostSupported || !ui.virtualizerSupported) {
+            EffectSlider(
+                title = "Loudness boost",
+                value = ui.profile.loudness,
+                enabled = ui.loudnessSupported,
+            ) { viewModel.setLoudness(it) }
+            Spacer(Modifier.height(4.dp))
+            Text("Reverb / room sound", style = MaterialTheme.typography.bodyMedium)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(ReverbPreset.entries) { room ->
+                    val index = room.ordinal
+                    if (ui.profile.reverb == index) {
+                        Button(
+                            onClick = { viewModel.setReverb(index) },
+                            enabled = ui.reverbSupported,
+                            contentPadding = ButtonDefaults.TextButtonContentPadding,
+                        ) { Text(room.label) }
+                    } else {
+                        OutlinedButton(
+                            onClick = { viewModel.setReverb(index) },
+                            enabled = ui.reverbSupported,
+                            contentPadding = ButtonDefaults.TextButtonContentPadding,
+                        ) { Text(room.label) }
+                    }
+                }
+            }
+            if (!ui.bassBoostSupported || !ui.virtualizerSupported ||
+                !ui.loudnessSupported || !ui.reverbSupported
+            ) {
                 Text(
                     text = "Some effects are not supported by this device's audio stack.",
                     style = MaterialTheme.typography.labelMedium,

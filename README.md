@@ -25,7 +25,11 @@ own audio stack, so the sliders correspond to real hardware bands.
 - **Studio-style 5–31 band equalizer** with real frequency labels from `Equalizer.getBand()`
 - **12 presets** (Flat, Bass Boost, Treble, Vocal, Rock, Pop, Jazz, Classical,
   Electronic, Acoustic, Podcast, Custom) that are resampled to the device's band count
-- **Bass boost** and **surround / virtualizer** controls when supported by the device
+- **Bass boost**, **surround / virtualizer**, **loudness boost** (compensates for the
+  volume drop caused by EQ) and **reverb / room sound** (room, hall, plate) when
+  supported by the device
+- **YouTube / low-volume help** built into Settings, with the correct steps for
+  the per-app media notification volume slider
 - **Instant bypass** with a master effect switch
 - **Profile manager** — apply, inspect and delete saved profiles
 - **Settings** — toggle auto-detect, reinitialize effects, inspect detected hardware

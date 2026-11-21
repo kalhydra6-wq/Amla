@@ -72,4 +72,11 @@ class ProfileMathTest {
         assertEquals("1.0 kHz", ProfileMath.formatFrequency(1_000))
         assertEquals("250 Hz", ProfileMath.formatFrequency(250))
     }
+
+    @Test
+    fun `millihertz from Android is converted to hertz`() {
+        assertEquals(60, ProfileMath.hzFromMilliHz(60_000))
+        assertEquals(3_600, ProfileMath.hzFromMilliHz(3_600_000))
+        assertEquals("3.6 kHz", ProfileMath.formatFrequency(ProfileMath.hzFromMilliHz(3_600_000)))
+    }
 }

@@ -36,6 +36,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val engineStatus: AudioEngine.Status? = null,
         val bassBoostSupported: Boolean = false,
         val virtualizerSupported: Boolean = false,
+        val loudnessSupported: Boolean = false,
+        val reverbSupported: Boolean = false,
         val isRealme: Boolean = false,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
         val message: String? = null,
@@ -56,6 +58,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             engineStatus = AudioController.status(),
             bassBoostSupported = AudioController.bassBoostSupported,
             virtualizerSupported = AudioController.virtualizerSupported,
+            loudnessSupported = AudioController.loudnessSupported,
+            reverbSupported = AudioController.reverbSupported,
             isRealme = Build.MANUFACTURER.equals("realme", ignoreCase = true),
             bandCount = AudioController.bandCount,
             minLevel = AudioController.minLevel,
@@ -104,6 +108,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 engineStatus = AudioController.status(),
                 bassBoostSupported = AudioController.bassBoostSupported,
                 virtualizerSupported = AudioController.virtualizerSupported,
+                loudnessSupported = AudioController.loudnessSupported,
+                reverbSupported = AudioController.reverbSupported,
             )
         }
     }
@@ -146,6 +152,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setVirtualizer(value: Int) {
         commit(_ui.value.profile.copy(virtualizer = value.coerceIn(0, 1_000), custom = true))
+    }
+
+    fun setLoudness(value: Int) {
+        commit(_ui.value.profile.copy(loudness = value.coerceIn(0, 1_000), custom = true))
+    }
+
+    fun setReverb(index: Int) {
+        commit(_ui.value.profile.copy(reverb = index.coerceIn(0, 6), custom = true))
     }
 
     fun setEffectsEnabled(enabled: Boolean) {
@@ -220,6 +234,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 engineStatus = AudioController.status(),
                 bassBoostSupported = AudioController.bassBoostSupported,
                 virtualizerSupported = AudioController.virtualizerSupported,
+                loudnessSupported = AudioController.loudnessSupported,
+                reverbSupported = AudioController.reverbSupported,
             )
         }
         setMessage(AudioController.status().detail)

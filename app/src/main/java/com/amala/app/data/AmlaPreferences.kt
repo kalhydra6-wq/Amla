@@ -2,6 +2,7 @@ package com.amala.app.data
 
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
+import com.amala.app.model.ReverbPreset
 
 /** Stores one EQ profile per output device plus global app settings. */
 class AmlaPreferences(private val store: KeyValueStore) {
@@ -48,12 +49,15 @@ class AmlaPreferences(private val store: KeyValueStore) {
             profile.bassBoost.coerceIn(0, 1_000).toString(),
             profile.virtualizer.coerceIn(0, 1_000).toString(),
             bands,
+            profile.loudness.coerceIn(0, 1_000).toString(),
+            profile.reverb.coerceIn(0, ReverbPreset.entries.size - 1).toString(),
         ).joinToString("|")
     }
 
     private fun decode(raw: String): EqualizerProfile? {
         val parts = raw.split('|')
-        if (parts.size != 6) return null
+        // Files saved by older versions have only 6 fields; loudness and reverb are optional.
+        if (parts.size < 6) return null
         val bands = parts[5].split(',').mapNotNull { it.toIntOrNull() }
         if (bands.isEmpty()) return null
         return EqualizerProfile(
@@ -63,6 +67,8 @@ class AmlaPreferences(private val store: KeyValueStore) {
             bassBoost = parts[3].toIntOrNull()?.coerceIn(0, 1_000) ?: 0,
             virtualizer = parts[4].toIntOrNull()?.coerceIn(0, 1_000) ?: 0,
             bands = bands,
+            loudness = parts.getOrNull(6)?.toIntOrNull()?.coerceIn(0, 1_000) ?: 0,
+            reverb = parts.getOrNull(7)?.toIntOrNull()?.coerceIn(0, ReverbPreset.entries.size - 1) ?: 0,
         )
     }
 

@@ -86,6 +86,27 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
             }
         }
 
+        item {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("YouTube / low volume", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "1. While the song plays, open the notification shade, expand the media " +
+                            "notification and push its volume slider to maximum — YouTube has its own " +
+                            "volume that can be set lower than the system volume.\n" +
+                            "2. Press volume up while YouTube is playing and make sure the slider is at max.\n" +
+                            "3. Turn off Battery Saver and any 'sound booster' inside YouTube.\n" +
+                            "4. Use the Loudness boost slider on the Equalizer tab if EQ makes the song " +
+                            "sound quieter.\n" +
+                            "Amla attaches to the global output, so it works with any player that uses " +
+                            "Android's normal audio output. Some apps use their own DSP and cannot be " +
+                            "processed by any system equalizer.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+
         if (ui.isRealme) {
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {

@@ -35,6 +35,8 @@ class AmlaPreferencesTest {
             bands = listOf(-1_500, 0, 2_500, 1_000, -500),
             bassBoost = 450,
             virtualizer = 200,
+            loudness = 600,
+            reverb = 3,
             enabled = true,
             custom = true,
         )
@@ -59,6 +61,18 @@ class AmlaPreferencesTest {
         preferences.saveProfile("BLUETOOTH:speaker", profile)
         val ids = preferences.storedProfiles().map { it.first }
         assertEquals(listOf("BLUETOOTH:speaker", "USB_DAC:dac"), ids)
+    }
+
+    @Test
+    fun `old saved profiles without loudness and reverb still load`() {
+        store.putString(
+            "profile:BLUETOOTH:old",
+            "ROCK|1|0|300|100|100,200,300,400,500",
+        )
+        val loaded = preferences.loadProfile("BLUETOOTH:old")
+        assertEquals(Preset.ROCK, loaded?.preset)
+        assertEquals(0, loaded?.loudness)
+        assertEquals(0, loaded?.reverb)
     }
 
     @Test

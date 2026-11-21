@@ -30,6 +30,8 @@ object AudioController {
     val maxLevel: Int get() = engine.maxLevel
     val bassBoostSupported: Boolean get() = engine.bassBoostSupported
     val virtualizerSupported: Boolean get() = engine.virtualizerSupported
+    val loudnessSupported: Boolean get() = engine.loudnessSupported
+    val reverbSupported: Boolean get() = engine.reverbSupported
 
     fun initialize(context: Context) {
         preferences = AmlaPreferences(SharedPreferencesStore(context.applicationContext))

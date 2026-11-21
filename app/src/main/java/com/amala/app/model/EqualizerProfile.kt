@@ -33,9 +33,27 @@ data class EqualizerProfile(
     val bands: List<Int>,
     val bassBoost: Int = 0,
     val virtualizer: Int = 0,
+    val loudness: Int = 0,
+    val reverb: Int = 0,
     val enabled: Boolean = true,
     val custom: Boolean = false,
 )
+
+/** Reverb "room" options mapped to Android's PresetReverb indices. */
+enum class ReverbPreset(val label: String, val androidPreset: Short) {
+    OFF("Off", 0),
+    SMALL_ROOM("Small room", 1),
+    MEDIUM_ROOM("Medium room", 2),
+    LARGE_ROOM("Large room", 3),
+    MEDIUM_HALL("Medium hall", 4),
+    LARGE_HALL("Large hall", 5),
+    PLATE("Plate", 6);
+
+    companion object {
+        fun fromIndex(index: Int): ReverbPreset =
+            entries.getOrNull(index) ?: OFF
+    }
+}
 
 /** Pure, testable math used to turn preset shapes into real equalizer levels. */
 object ProfileMath {
@@ -100,9 +118,14 @@ object ProfileMath {
                 .map { it.toInt().coerceIn(minOf(minLevel, maxLevel), maxOf(minLevel, maxLevel)) },
             bassBoost = profile.bassBoost.coerceIn(0, 1000),
             virtualizer = profile.virtualizer.coerceIn(0, 1000),
+            loudness = profile.loudness.coerceIn(0, 1000),
+            reverb = profile.reverb.coerceIn(0, ReverbPreset.entries.size - 1),
         )
 
     fun formatLevel(level: Int): String = String.format(Locale.US, "%+.1f dB", level / 100f)
+
+    /** Android's Equalizer.getCenterFreq() returns millihertz. */
+    fun hzFromMilliHz(milliHz: Int): Int = milliHz / 1_000
 
     fun formatFrequency(hz: Int): String =
         if (hz >= 1000) String.format(Locale.US, "%.1f kHz", hz / 1000f) else "$hz Hz"

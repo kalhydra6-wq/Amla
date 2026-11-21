@@ -1,10 +1,12 @@
 package com.amala.app.audio
 
-import android.media.audiofx.AudioEffect
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
+import android.media.audiofx.LoudnessEnhancer
+import android.media.audiofx.PresetReverb
 import android.media.audiofx.Virtualizer
 import com.amala.app.model.EqualizerProfile
+import com.amala.app.model.ReverbPreset
 import kotlin.math.pow
 
 /**
@@ -33,11 +35,15 @@ class AudioEngine {
     private var equalizer: Equalizer? = null
     private var bassBoost: BassBoost? = null
     private var virtualizer: Virtualizer? = null
+    private var loudness: LoudnessEnhancer? = null
+    private var reverb: PresetReverb? = null
     private val sessionEqualizers = mutableMapOf<Int, Equalizer>()
 
     val ready: Boolean get() = equalizer != null
     val bassBoostSupported: Boolean get() = bassBoost != null
     val virtualizerSupported: Boolean get() = virtualizer != null
+    val loudnessSupported: Boolean get() = loudness != null
+    val reverbSupported: Boolean get() = reverb != null
 
     val bandCount: Int
         get() = equalizer?.numberOfBands?.toInt()?.coerceAtLeast(1) ?: DEFAULT_BANDS
@@ -54,17 +60,20 @@ class AudioEngine {
         equalizer = runCatching { Equalizer(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
         bassBoost = runCatching { BassBoost(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
         virtualizer = runCatching { Virtualizer(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
+        loudness = runCatching { LoudnessEnhancer(GLOBAL_SESSION) }.getOrNull()
+        reverb = runCatching { PresetReverb(EFFECT_PRIORITY, GLOBAL_SESSION) }.getOrNull()
         return ready
     }
 
     /** Real band frequencies reported by the device, with a sensible fallback. */
     fun frequencies(): List<Int> = (0 until bandCount).map { index ->
-        val frequency = try {
+        val milliHz = try {
             equalizer?.getCenterFreq(index.toShort())
         } catch (ex: Exception) {
             null
         }
-        if (frequency != null && frequency > 0) frequency else fallbackFrequency(index, bandCount)
+        // getCenterFreq reports millihertz (60 Hz == 60_000 mHz).
+        if (milliHz != null && milliHz > 0) milliHz / 1_000 else fallbackFrequency(index, bandCount)
     }
 
     fun apply(profile: EqualizerProfile) {
@@ -105,11 +114,15 @@ class AudioEngine {
         runCatching { equalizer?.release() }
         runCatching { bassBoost?.release() }
         runCatching { virtualizer?.release() }
+        runCatching { loudness?.release() }
+        runCatching { reverb?.release() }
         sessionEqualizers.values.forEach { runCatching { it.release() } }
         sessionEqualizers.clear()
         equalizer = null
         bassBoost = null
         virtualizer = null
+        loudness = null
+        reverb = null
     }
 
     private fun applyToEffect(effect: Equalizer, profile: EqualizerProfile) {
@@ -133,6 +146,19 @@ class AudioEngine {
         runCatching {
             virtualizer?.setEnabled(profile.enabled && surround > 0)
             if (profile.enabled && surround > 0) virtualizer?.setStrength(surround.toShort())
+        }
+
+        // Loudness compensates for the perceived volume drop caused by EQ processing.
+        val boost = profile.loudness.coerceIn(0, 1_000)
+        runCatching {
+            loudness?.setEnabled(profile.enabled && boost > 0)
+            if (profile.enabled && boost > 0) loudness?.setTargetGain(boost * 2)
+        }
+
+        val room = ReverbPreset.fromIndex(profile.reverb)
+        runCatching {
+            reverb?.setPreset(room.androidPreset)
+            reverb?.setEnabled(profile.enabled && room != ReverbPreset.OFF)
         }
     }
 
