@@ -32,6 +32,7 @@ object AudioController {
     val virtualizerSupported: Boolean get() = engine.virtualizerSupported
     val loudnessSupported: Boolean get() = engine.loudnessSupported
     val reverbSupported: Boolean get() = engine.reverbSupported
+    val limiterSupported: Boolean get() = engine.limiterSupported
 
     fun initialize(context: Context) {
         preferences = AmlaPreferences(SharedPreferencesStore(context.applicationContext))

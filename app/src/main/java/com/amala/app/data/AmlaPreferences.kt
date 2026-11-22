@@ -2,6 +2,7 @@ package com.amala.app.data
 
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
+import com.amala.app.model.ProfileMath
 import com.amala.app.model.ReverbPreset
 
 /** Stores one EQ profile per output device plus global app settings. */
@@ -55,6 +56,9 @@ class AmlaPreferences(private val store: KeyValueStore) {
             bands,
             profile.loudness.coerceIn(0, 1_000).toString(),
             profile.reverb.coerceIn(0, ReverbPreset.entries.size - 1).toString(),
+            profile.preamp.coerceIn(ProfileMath.MIN_PREAMP, ProfileMath.MAX_PREAMP).toString(),
+            if (profile.limiterEnabled) "1" else "0",
+            profile.limiterStrength.coerceIn(0, 1_000).toString(),
         ).joinToString("|")
     }
 
@@ -73,6 +77,10 @@ class AmlaPreferences(private val store: KeyValueStore) {
             bands = bands,
             loudness = parts.getOrNull(6)?.toIntOrNull()?.coerceIn(0, 1_000) ?: 0,
             reverb = parts.getOrNull(7)?.toIntOrNull()?.coerceIn(0, ReverbPreset.entries.size - 1) ?: 0,
+            preamp = parts.getOrNull(8)?.toIntOrNull()
+                ?.coerceIn(ProfileMath.MIN_PREAMP, ProfileMath.MAX_PREAMP) ?: 0,
+            limiterEnabled = parts.getOrNull(9) == "1",
+            limiterStrength = parts.getOrNull(10)?.toIntOrNull()?.coerceIn(0, 1_000) ?: 500,
         )
     }
 

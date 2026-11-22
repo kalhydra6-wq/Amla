@@ -201,6 +201,22 @@ private fun BandsCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         Column(Modifier.padding(16.dp)) {
             Text("Frequency bands (${ui.bandCount})", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Preamp", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(62.dp))
+                Slider(
+                    value = ui.profile.preamp.toFloat(),
+                    valueRange = ProfileMath.MIN_PREAMP.toFloat()..ProfileMath.MAX_PREAMP.toFloat(),
+                    onValueChange = { viewModel.setPreamp(it.toInt()) },
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = ProfileMath.formatLevel(ui.profile.preamp),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(68.dp),
+                )
+            }
+            Spacer(Modifier.height(6.dp))
             ui.profile.bands.forEachIndexed { index, level ->
                 val frequency = ui.frequencies.getOrNull(index) ?: (index + 1) * 1000
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -268,6 +284,31 @@ private fun ExtrasCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     }
                 }
             }
+            if (ui.limiterSupported) {
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Limiter / anti-clipping", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "Prevents boosted EQ from distorting (Android 9+)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = ui.profile.limiterEnabled,
+                        onCheckedChange = { viewModel.setLimiterEnabled(it) },
+                    )
+                }
+                if (ui.profile.limiterEnabled) {
+                    EffectSlider(
+                        title = "Limiter strength",
+                        value = ui.profile.limiterStrength,
+                        enabled = true,
+                    ) { viewModel.setLimiterStrength(it) }
+                }
+            }
+
             if (!ui.bassBoostSupported || !ui.virtualizerSupported ||
                 !ui.loudnessSupported || !ui.reverbSupported
             ) {

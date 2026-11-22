@@ -63,6 +63,18 @@ class ProfileMathTest {
         assertTrue(fitted.bands.all { it in -15_000..15_000 })
         assertEquals(1_000, fitted.bassBoost)
         assertEquals(0, fitted.virtualizer)
+        assertEquals(0, fitted.preamp)
+        assertEquals(false, fitted.limiterEnabled)
+        assertEquals(500, fitted.limiterStrength)
+    }
+
+    @Test
+    fun `preamp is clamped to the supported dB range`() {
+        val loud = EqualizerProfile(Preset.FLAT, listOf(0), preamp = 5_000, limiterStrength = 9_999)
+        assertEquals(ProfileMath.MAX_PREAMP, ProfileMath.fit(loud, 1, -1_500, 1_500).preamp)
+        val quiet = EqualizerProfile(Preset.FLAT, listOf(0), preamp = -5_000, limiterStrength = -1)
+        assertEquals(ProfileMath.MIN_PREAMP, ProfileMath.fit(quiet, 1, -1_500, 1_500).preamp)
+        assertEquals(0, ProfileMath.fit(quiet, 1, -1_500, 1_500).limiterStrength)
     }
 
     @Test

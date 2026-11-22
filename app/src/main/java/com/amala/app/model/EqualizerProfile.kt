@@ -35,6 +35,9 @@ data class EqualizerProfile(
     val virtualizer: Int = 0,
     val loudness: Int = 0,
     val reverb: Int = 0,
+    val preamp: Int = 0,
+    val limiterEnabled: Boolean = false,
+    val limiterStrength: Int = 500,
     val enabled: Boolean = true,
     val custom: Boolean = false,
 )
@@ -57,6 +60,8 @@ enum class ReverbPreset(val label: String, val androidPreset: Short) {
 
 /** Pure, testable math used to turn preset shapes into real equalizer levels. */
 object ProfileMath {
+    const val MIN_PREAMP = -1_200
+    const val MAX_PREAMP = 600
 
     /** Resamples [shape] to [size] bands using linear interpolation. */
     fun resample(shape: List<Float>, size: Int): List<Float> {
@@ -120,6 +125,9 @@ object ProfileMath {
             virtualizer = profile.virtualizer.coerceIn(0, 1000),
             loudness = profile.loudness.coerceIn(0, 1000),
             reverb = profile.reverb.coerceIn(0, ReverbPreset.entries.size - 1),
+            preamp = profile.preamp.coerceIn(MIN_PREAMP, MAX_PREAMP),
+            limiterEnabled = profile.limiterEnabled,
+            limiterStrength = profile.limiterStrength.coerceIn(0, 1000),
         )
 
     fun formatLevel(level: Int): String = String.format(Locale.US, "%+.1f dB", level / 100f)

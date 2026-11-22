@@ -39,6 +39,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val virtualizerSupported: Boolean = false,
         val loudnessSupported: Boolean = false,
         val reverbSupported: Boolean = false,
+        val limiterSupported: Boolean = false,
         val isRealme: Boolean = false,
         val keepAlive: Boolean = true,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
@@ -62,6 +63,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             virtualizerSupported = AudioController.virtualizerSupported,
             loudnessSupported = AudioController.loudnessSupported,
             reverbSupported = AudioController.reverbSupported,
+            limiterSupported = AudioController.limiterSupported,
             isRealme = Build.MANUFACTURER.equals("realme", ignoreCase = true),
             keepAlive = preferences.keepAlive,
             bandCount = AudioController.bandCount,
@@ -113,6 +115,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 virtualizerSupported = AudioController.virtualizerSupported,
                 loudnessSupported = AudioController.loudnessSupported,
                 reverbSupported = AudioController.reverbSupported,
+                limiterSupported = AudioController.limiterSupported,
             )
         }
     }
@@ -159,6 +162,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setLoudness(value: Int) {
         commit(_ui.value.profile.copy(loudness = value.coerceIn(0, 1_000), custom = true))
+    }
+
+    fun setPreamp(value: Int) {
+        commit(
+            _ui.value.profile.copy(
+                preamp = value.coerceIn(ProfileMath.MIN_PREAMP, ProfileMath.MAX_PREAMP),
+                custom = true,
+            ),
+        )
+    }
+
+    fun setLimiterEnabled(enabled: Boolean) {
+        commit(_ui.value.profile.copy(limiterEnabled = enabled, custom = true))
+    }
+
+    fun setLimiterStrength(value: Int) {
+        commit(_ui.value.profile.copy(limiterStrength = value.coerceIn(0, 1_000), custom = true))
     }
 
     fun setReverb(index: Int) {
@@ -251,6 +271,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 virtualizerSupported = AudioController.virtualizerSupported,
                 loudnessSupported = AudioController.loudnessSupported,
                 reverbSupported = AudioController.reverbSupported,
+                limiterSupported = AudioController.limiterSupported,
             )
         }
         setMessage(AudioController.status().detail)

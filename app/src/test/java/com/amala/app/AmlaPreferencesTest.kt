@@ -37,6 +37,9 @@ class AmlaPreferencesTest {
             virtualizer = 200,
             loudness = 600,
             reverb = 3,
+            preamp = -300,
+            limiterEnabled = true,
+            limiterStrength = 750,
             enabled = true,
             custom = true,
         )
@@ -73,6 +76,9 @@ class AmlaPreferencesTest {
         assertEquals(Preset.ROCK, loaded?.preset)
         assertEquals(0, loaded?.loudness)
         assertEquals(0, loaded?.reverb)
+        assertEquals(0, loaded?.preamp)
+        assertEquals(false, loaded?.limiterEnabled)
+        assertEquals(500, loaded?.limiterStrength)
     }
 
     @Test
