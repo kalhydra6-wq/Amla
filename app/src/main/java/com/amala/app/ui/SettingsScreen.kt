@@ -39,6 +39,11 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         checked = ui.autoApply,
                     ) { viewModel.setAutoApply(it) }
                     SettingRow(
+                        title = "Live signal chain card",
+                        subtitle = "Show the now-playing and device info card on the Equalizer tab",
+                        checked = ui.signalChainEnabled,
+                    ) { viewModel.setSignalChainEnabled(it) }
+                    SettingRow(
                         title = "Auto gain protection",
                         subtitle = "Lowers preamp as you boost EQ or bass to reduce clipping",
                         checked = ui.autoGainProtection,

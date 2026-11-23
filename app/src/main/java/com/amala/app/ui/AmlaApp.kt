@@ -133,7 +133,7 @@ fun AmlaApp(viewModel: MainViewModel = viewModel()) {
                             Screen.EQUALIZER -> EqualizerScreen(ui, viewModel)
                             Screen.PROFILES -> ProfilesScreen(ui, viewModel)
                             Screen.SETTINGS -> SettingsScreen(ui, viewModel)
-                            Screen.ABOUT -> AboutScreen()
+                            Screen.ABOUT -> AboutScreen(ui, viewModel)
                         }
                     }
                 }

@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.amala.app.viewmodel.MainViewModel
 
 @Composable
-fun AboutScreen() {
+fun AboutScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
@@ -25,6 +28,23 @@ fun AboutScreen() {
                 Column(Modifier.padding(16.dp)) {
                     Text("Amla", style = MaterialTheme.typography.titleLarge)
                     Text("Version 1.0.0", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+
+        if (ui.crashReport != null) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Last crash report", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = ui.crashReport.orEmpty(),
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                        )
+                        OutlinedButton(onClick = { viewModel.clearCrashReport() }) {
+                            Text("Clear report")
+                        }
+                    }
                 }
             }
         }

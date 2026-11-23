@@ -9,6 +9,7 @@ import com.amala.app.data.SharedPreferencesStore
 class AmlaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        CrashLogger.install(this)
         AudioController.initialize(this)
         if (AmlaPreferences(SharedPreferencesStore(this)).keepAlive) {
             AmlaAudioService.start(this)

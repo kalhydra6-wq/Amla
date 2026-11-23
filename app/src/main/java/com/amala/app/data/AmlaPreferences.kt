@@ -17,6 +17,10 @@ class AmlaPreferences(private val store: KeyValueStore) {
         get() = store.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT)
         set(value) = store.putInt(KEY_ACCENT_COLOR, value)
 
+    var signalChainEnabled: Boolean
+        get() = store.getBoolean(KEY_SIGNAL_CHAIN, true)
+        set(value) = store.putBoolean(KEY_SIGNAL_CHAIN, value)
+
     var autoApply: Boolean
         get() = store.getBoolean(KEY_AUTO_APPLY, true)
         set(value) = store.putBoolean(KEY_AUTO_APPLY, value)
@@ -106,6 +110,7 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val KEY_LAST_DEVICE = "last_device_id"
         private const val KEY_THEME_MODE = "appearance:theme_mode"
         private const val KEY_ACCENT_COLOR = "appearance:accent_color"
+        private const val KEY_SIGNAL_CHAIN = "appearance:signal_chain"
         private const val DEFAULT_ACCENT = 0xFF007C70.toInt()
     }
 }

@@ -1,6 +1,7 @@
 package com.amala.app.viewmodel
 
 import android.app.Application
+import com.amala.app.CrashLogger
 import android.os.Build
 import com.amala.app.audio.AmlaAudioService
 import androidx.lifecycle.AndroidViewModel
@@ -48,6 +49,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val totalBoostDb: Float = 0f,
         val themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
         val accentColor: Int = 0xFF007C70.toInt(),
+        val signalChainEnabled: Boolean = true,
+        val crashReport: String? = null,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
         val message: String? = null,
     )
@@ -62,7 +65,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
     init {
+        val crash = CrashLogger.read(getApplication())
+        if (crash != null && listOf("SignalChain", "NowPlaying", "UsbDevice", "MediaSession").any { it in crash }) {
+            preferences.signalChainEnabled = false
+        }
         _ui.value = UiState(
+            signalChainEnabled = preferences.signalChainEnabled,
+            crashReport = crash,
             autoApply = preferences.autoApply,
             effectsEnabled = AudioController.enabled,
             engineStatus = AudioController.status(),
@@ -251,6 +260,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         commit(profile)
         setMessage("Profile loaded")
+    }
+
+    fun setSignalChainEnabled(enabled: Boolean) {
+        preferences.signalChainEnabled = enabled
+        _ui.update { it.copy(signalChainEnabled = enabled) }
+    }
+
+    fun clearCrashReport() {
+        CrashLogger.clear(getApplication())
+        _ui.update { it.copy(crashReport = null) }
     }
 
     fun setThemeMode(mode: ThemeMode) {
