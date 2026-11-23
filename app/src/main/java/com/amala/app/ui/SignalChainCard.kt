@@ -232,8 +232,8 @@ private fun ChainBlocks(device: AudioDevice?, ui: MainViewModel.UiState, context
 private fun DspChip(active: Boolean) {
     val transition = rememberInfiniteTransition(label = "dsp")
     val shift by transition.animateFloat(
-        initialValue = -4f,
-        targetValue = 4f,
+        initialValue = 0f,
+        targetValue = 8f,
         animationSpec = infiniteRepeatable(tween(1100), RepeatMode.Reverse),
         label = "dsp-shift",
     )
