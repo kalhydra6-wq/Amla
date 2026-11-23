@@ -1,23 +1,53 @@
 package com.amala.app.audio
 
+import android.content.ComponentName
 import android.media.session.MediaController
+import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 
 /** Receives now-playing updates from media sessions once notification access is granted. */
 class AmlaNotificationListener : NotificationListenerService() {
 
+    private val handler = Handler(Looper.getMainLooper())
     private val callbacks = mutableMapOf<MediaController, MediaController.Callback>()
 
-    override fun onActiveSessionsChanged(controllers: MutableList<MediaController>?) {
-        super.onActiveSessionsChanged(controllers)
-        val active = controllers.orEmpty()
-        callbacks.forEach { (controller, callback) ->
-            if (controller !in active) runCatching { controller.unregisterCallback(callback) }
-        }
-        callbacks.entries.removeAll { (controller, _) -> controller !in active }
+    private val sessionListener = MediaSessionManager.OnActiveSessionsChangedListener { controllers ->
+        onSessionsChanged(controllers.orEmpty())
+    }
 
-        active.forEach { controller ->
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        val manager = runCatching {
+            getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager
+        }.getOrNull() ?: return
+        runCatching {
+            manager.addOnActiveSessionsChangedListener(
+                sessionListener,
+                ComponentName(this, AmlaNotificationListener::class.java),
+                handler,
+            )
+        }
+        onSessionsChanged(
+            runCatching {
+                manager.getActiveSessions(ComponentName(this, AmlaNotificationListener::class.java))
+            }.getOrDefault(emptyList()),
+        )
+    }
+
+    override fun onListenerDisconnected() {
+        val manager = runCatching {
+            getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager
+        }.getOrNull()
+        manager?.let { runCatching { it.removeOnActiveSessionsChangedListener(sessionListener) } }
+        super.onListenerDisconnected()
+    }
+
+    private fun onSessionsChanged(controllers: List<MediaController>) {
+        callbacks.entries.removeAll { (controller, _) -> controller !in controllers }
+        controllers.forEach { controller ->
             if (callbacks.containsKey(controller)) return@forEach
             val callback = object : MediaController.Callback() {
                 override fun onMetadataChanged(metadata: android.media.MediaMetadata?) {
@@ -31,10 +61,9 @@ class AmlaNotificationListener : NotificationListenerService() {
             runCatching { controller.registerCallback(callback) }
             callbacks[controller] = callback
         }
-
-        val playing = active.firstOrNull {
+        val playing = controllers.firstOrNull {
             it.playbackState?.state == PlaybackState.STATE_PLAYING
-        } ?: active.firstOrNull()
+        } ?: controllers.firstOrNull()
         NowPlayingRepository.update(playing, applicationContext)
     }
 

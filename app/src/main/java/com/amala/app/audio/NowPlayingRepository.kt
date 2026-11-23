@@ -1,5 +1,6 @@
 package com.amala.app.audio
 
+import android.content.ComponentName
 import android.content.Context
 import android.media.MediaMetadata
 import android.media.session.MediaController
@@ -38,7 +39,8 @@ object NowPlayingRepository {
         val manager = runCatching {
             context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
         }.getOrNull()
-        val sessions = manager?.let { runCatching { it.getActiveSessions(null) }.getOrDefault(emptyList()) }
+        val listener = ComponentName(context, AmlaNotificationListener::class.java)
+        val sessions = manager?.let { runCatching { it.getActiveSessions(listener) }.getOrDefault(emptyList()) }
             ?: emptyList()
         val controller = sessions.firstOrNull {
             it.playbackState?.state == PlaybackState.STATE_PLAYING
