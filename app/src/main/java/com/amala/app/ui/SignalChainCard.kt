@@ -182,7 +182,10 @@ private fun NowPlayingBlock(
     }
     if (!info.permissionGranted) {
         Text(
-            text = "Allow notification access to show song, artist and album art. Amla only reads media session metadata — no notifications are stored or sent anywhere.",
+            text = "Allow notification access for song title, artist and album art. Amla reads only media metadata — nothing is stored or sent anywhere.\n" +
+                "Manual steps: Settings → Notifications & status bar → Notification access → enable Amla. " +
+                "If your phone shows 'Restricted setting', use Settings search for 'Notification access'. " +
+                "Song info will show N/A if this stays off — the equalizer works normally.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
