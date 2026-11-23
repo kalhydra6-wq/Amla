@@ -25,6 +25,7 @@ class AmlaPreferencesTest {
     fun `settings have sensible defaults`() {
         assertTrue(preferences.autoApply)
         assertTrue(preferences.effectsEnabled)
+        assertTrue(preferences.autoGainProtection)
         assertNull(preferences.lastDeviceId)
     }
 
@@ -93,8 +94,10 @@ class AmlaPreferencesTest {
         preferences.autoApply = false
         preferences.effectsEnabled = false
         preferences.lastDeviceId = "BLUETOOTH:speaker"
+        preferences.autoGainProtection = false
         assertFalse(preferences.autoApply)
         assertFalse(preferences.effectsEnabled)
         assertEquals("BLUETOOTH:speaker", preferences.lastDeviceId)
+        assertFalse(preferences.autoGainProtection)
     }
 }

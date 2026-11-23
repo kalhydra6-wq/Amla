@@ -130,6 +130,25 @@ object ProfileMath {
             limiterStrength = profile.limiterStrength.coerceIn(0, 1000),
         )
 
+    /** Strongest single boost from the EQ bands or bass boost, in dB. */
+    fun maxBoostDb(profile: EqualizerProfile): Float {
+        val bandBoost = (profile.bands.maxOfOrNull { it } ?: 0).coerceAtLeast(0) / 100f
+        val bassBoost = profile.bassBoost.coerceAtLeast(0) / 100f
+        return maxOf(bandBoost, bassBoost)
+    }
+
+    /** Auto gain: set preamp to minus half of the strongest boost, within limits. */
+    fun compensatedPreamp(profile: EqualizerProfile): Int {
+        val compensation = (maxBoostDb(profile) / 2f * 100f).toInt()
+        return (-compensation).coerceIn(MIN_PREAMP, MAX_PREAMP)
+    }
+
+    /** Sum of all positive band boosts plus bass boost, in dB. */
+    fun totalBoostDb(profile: EqualizerProfile): Float {
+        val bands = profile.bands.filter { it > 0 }.sum() / 100f
+        return bands + profile.bassBoost.coerceAtLeast(0) / 100f
+    }
+
     fun formatLevel(level: Int): String = String.format(Locale.US, "%+.1f dB", level / 100f)
 
     /** Android's Equalizer.getCenterFreq() returns millihertz. */

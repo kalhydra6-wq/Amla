@@ -54,7 +54,7 @@ fun EqualizerScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         item { PresetCard(ui, viewModel) }
         item { BandsCard(ui, viewModel) }
         item { ExtrasCard(ui, viewModel) }
-        item { ActionsRow(viewModel) }
+        item { ActionsRow(ui, viewModel) }
     }
 }
 
@@ -162,6 +162,22 @@ private fun MasterCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     color = MaterialTheme.colorScheme.error,
                 )
             }
+            if (ui.totalBoostDb > 9f) {
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "High boost +${String.format(java.util.Locale.US, "%.1f", ui.totalBoostDb)} dB · " +
+                            "clipping risk — lower the bands or enable Auto gain protection",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(10.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -208,12 +224,20 @@ private fun BandsCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     valueRange = ProfileMath.MIN_PREAMP.toFloat()..ProfileMath.MAX_PREAMP.toFloat(),
                     onValueChange = { viewModel.setPreamp(it.toInt()) },
                     modifier = Modifier.weight(1f),
+                    enabled = !ui.autoGainProtection,
                 )
                 Text(
                     text = ProfileMath.formatLevel(ui.profile.preamp),
                     style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.End,
                     modifier = Modifier.width(68.dp),
+                )
+            }
+            if (ui.autoGainProtection) {
+                Text(
+                    text = "Managed automatically by Auto gain protection",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             Spacer(Modifier.height(6.dp))
@@ -344,7 +368,7 @@ private fun EffectSlider(
 }
 
 @Composable
-private fun ActionsRow(viewModel: MainViewModel) {
+private fun ActionsRow(ui: MainViewModel.UiState, viewModel: MainViewModel) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -369,6 +393,23 @@ private fun ActionsRow(viewModel: MainViewModel) {
             contentPadding = ButtonDefaults.TextButtonContentPadding,
         ) {
             Text("Rescan")
+        }
+        if (ui.abCompareActive) {
+            Button(
+                onClick = { viewModel.toggleAbCompare() },
+                modifier = Modifier.weight(1f),
+                contentPadding = ButtonDefaults.TextButtonContentPadding,
+            ) {
+                Text("A/B on")
+            }
+        } else {
+            OutlinedButton(
+                onClick = { viewModel.toggleAbCompare() },
+                modifier = Modifier.weight(1f),
+                contentPadding = ButtonDefaults.TextButtonContentPadding,
+            ) {
+                Text("A/B")
+            }
         }
     }
 }

@@ -37,6 +37,11 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         checked = ui.autoApply,
                     ) { viewModel.setAutoApply(it) }
                     SettingRow(
+                        title = "Auto gain protection",
+                        subtitle = "Lowers preamp as you boost EQ or bass to reduce clipping",
+                        checked = ui.autoGainProtection,
+                    ) { viewModel.setAutoGainProtection(it) }
+                    SettingRow(
                         title = "Keep EQ active in background",
                         subtitle = "Reapplies your sound when other apps change it, so it works across all players",
                         checked = ui.keepAlive,

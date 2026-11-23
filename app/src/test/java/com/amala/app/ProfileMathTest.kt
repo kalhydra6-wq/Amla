@@ -78,6 +78,27 @@ class ProfileMathTest {
     }
 
     @Test
+    fun `auto gain sets preamp to minus half of strongest boost`() {
+        val profile = EqualizerProfile(Preset.CUSTOM, listOf(600, 200, 0, 0, 0), bassBoost = 400)
+        assertEquals(6f, ProfileMath.maxBoostDb(profile), 0.001f)
+        assertEquals(-300, ProfileMath.compensatedPreamp(profile))
+    }
+
+    @Test
+    fun `auto gain preamp stays within hardware limits`() {
+        val huge = EqualizerProfile(Preset.CUSTOM, listOf(15_000), bassBoost = 1_000)
+        assertEquals(ProfileMath.MIN_PREAMP, ProfileMath.compensatedPreamp(huge))
+    }
+
+    @Test
+    fun `total boost warns above nine dB`() {
+        val loud = EqualizerProfile(Preset.CUSTOM, listOf(400, 300, 200, 0, 0), bassBoost = 200)
+        assertEquals(11f, ProfileMath.totalBoostDb(loud), 0.001f)
+        val quiet = EqualizerProfile(Preset.FLAT, listOf(0, 0, 0, 0, 0))
+        assertEquals(0f, ProfileMath.totalBoostDb(quiet), 0.001f)
+    }
+
+    @Test
     fun `formatters produce readable values`() {
         assertEquals("+3.5 dB", ProfileMath.formatLevel(350))
         assertEquals("-2.0 dB", ProfileMath.formatLevel(-200))

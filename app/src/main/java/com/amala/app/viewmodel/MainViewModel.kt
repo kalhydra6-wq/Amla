@@ -42,6 +42,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val limiterSupported: Boolean = false,
         val isRealme: Boolean = false,
         val keepAlive: Boolean = true,
+        val autoGainProtection: Boolean = true,
+        val abCompareActive: Boolean = false,
+        val totalBoostDb: Float = 0f,
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
         val message: String? = null,
     )
@@ -50,6 +53,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var detector: AudioDeviceDetector? = null
     private var manuallySelected = false
     private var lastAppliedDeviceId: String? = null
+    private var profileBeforeCompare: EqualizerProfile? = null
 
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -66,6 +70,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             limiterSupported = AudioController.limiterSupported,
             isRealme = Build.MANUFACTURER.equals("realme", ignoreCase = true),
             keepAlive = preferences.keepAlive,
+            autoGainProtection = preferences.autoGainProtection,
+            totalBoostDb = ProfileMath.totalBoostDb(AudioController.profile),
             bandCount = AudioController.bandCount,
             minLevel = AudioController.minLevel,
             maxLevel = AudioController.maxLevel,
@@ -116,6 +122,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 loudnessSupported = AudioController.loudnessSupported,
                 reverbSupported = AudioController.reverbSupported,
                 limiterSupported = AudioController.limiterSupported,
+                totalBoostDb = ProfileMath.totalBoostDb(profile),
             )
         }
     }
@@ -241,6 +248,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         setMessage("Profile loaded")
     }
 
+    fun setAutoGainProtection(enabled: Boolean) {
+        preferences.autoGainProtection = enabled
+        _ui.update { it.copy(autoGainProtection = enabled) }
+        commit(_ui.value.profile)
+        setMessage(if (enabled) "Auto gain protection on" else "Auto gain protection off")
+    }
+
+    /** Instantly swaps the live sound between the saved curve and a flat one. */
+    fun toggleAbCompare() {
+        val state = _ui.value
+        if (state.abCompareActive) {
+            val original = profileBeforeCompare ?: return
+            AudioController.applyLoaded(original)
+            profileBeforeCompare = null
+            _ui.update {
+                it.copy(
+                    abCompareActive = false,
+                    totalBoostDb = ProfileMath.totalBoostDb(original),
+                )
+            }
+            setMessage("A/B off · your curve restored")
+        } else {
+            profileBeforeCompare = state.profile
+            val flat = EqualizerProfile(Preset.FLAT, List(state.bandCount) { 0 }, enabled = true)
+            AudioController.applyLoaded(flat)
+            _ui.update { it.copy(abCompareActive = true, totalBoostDb = 0f) }
+            setMessage("A/B on · flat curve (tap again to restore)")
+        }
+    }
+
     fun setKeepAlive(enabled: Boolean) {
         preferences.keepAlive = enabled
         _ui.update { it.copy(keepAlive = enabled) }
@@ -282,9 +319,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun commit(profile: EqualizerProfile) {
-        val enabledProfile = profile.copy(enabled = true)
-        _ui.update { it.copy(profile = enabledProfile) }
-        AudioController.setProfile(enabledProfile, _ui.value.selectedDevice?.id)
+        val base = profile.copy(enabled = true)
+        val adjusted = if (_ui.value.autoGainProtection) {
+            base.copy(preamp = ProfileMath.compensatedPreamp(base))
+        } else {
+            base
+        }
+        _ui.update {
+            it.copy(
+                profile = adjusted,
+                abCompareActive = false,
+                totalBoostDb = ProfileMath.totalBoostDb(adjusted),
+            )
+        }
+        profileBeforeCompare = null
+        AudioController.setProfile(adjusted, _ui.value.selectedDevice?.id)
         _ui.update {
             it.copy(
                 storedProfiles = preferences.storedProfiles(),
