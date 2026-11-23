@@ -54,6 +54,7 @@ fun EqualizerScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        item { SignalChainCard(ui, viewModel) }
         item { DeviceCard(ui, viewModel) }
         item { MasterCard(ui, viewModel) }
         item { PresetCard(ui, viewModel) }

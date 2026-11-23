@@ -10,6 +10,9 @@ data class AudioDevice(
     val category: DeviceCategory,
     val typeLabel: String,
     val address: String? = null,
+    val sampleRates: List<Int> = emptyList(),
+    val encodings: List<Int> = emptyList(),
+    val channelCounts: List<Int> = emptyList(),
 ) {
     val displayName: String
         get() = name.ifBlank { category.displayName }
@@ -40,6 +43,9 @@ object AudioDevices {
             category = category,
             typeLabel = typeLabel(info.type),
             address = address,
+            sampleRates = runCatching { info.sampleRates.toList() }.getOrDefault(emptyList()),
+            encodings = runCatching { info.encodings.toList() }.getOrDefault(emptyList()),
+            channelCounts = runCatching { info.channelCounts.toList() }.getOrDefault(emptyList()),
         )
     }
 
