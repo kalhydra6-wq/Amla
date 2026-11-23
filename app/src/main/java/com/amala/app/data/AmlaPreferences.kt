@@ -4,9 +4,18 @@ import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
 import com.amala.app.model.ReverbPreset
+import com.amala.app.model.ThemeMode
 
 /** Stores one EQ profile per output device plus global app settings. */
 class AmlaPreferences(private val store: KeyValueStore) {
+
+    var themeMode: ThemeMode
+        get() = ThemeMode.fromKey(store.getString(KEY_THEME_MODE, null))
+        set(value) = store.putString(KEY_THEME_MODE, value.name)
+
+    var accentColor: Int
+        get() = store.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT)
+        set(value) = store.putInt(KEY_ACCENT_COLOR, value)
 
     var autoApply: Boolean
         get() = store.getBoolean(KEY_AUTO_APPLY, true)
@@ -95,5 +104,8 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val KEY_KEEP_ALIVE = "setting:keep_alive"
         private const val KEY_AUTO_GAIN = "setting:auto_gain"
         private const val KEY_LAST_DEVICE = "last_device_id"
+        private const val KEY_THEME_MODE = "appearance:theme_mode"
+        private const val KEY_ACCENT_COLOR = "appearance:accent_color"
+        private const val DEFAULT_ACCENT = 0xFF007C70.toInt()
     }
 }

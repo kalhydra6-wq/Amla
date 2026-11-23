@@ -1,5 +1,10 @@
 package com.amala.app.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -162,7 +167,11 @@ private fun MasterCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            if (ui.totalBoostDb > 9f) {
+            AnimatedVisibility(
+                visible = ui.totalBoostDb > 9f,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
                 Spacer(Modifier.height(8.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer,
@@ -324,7 +333,11 @@ private fun ExtrasCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         onCheckedChange = { viewModel.setLimiterEnabled(it) },
                     )
                 }
-                if (ui.profile.limiterEnabled) {
+                AnimatedVisibility(
+                    visible = ui.profile.limiterEnabled,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
                     EffectSlider(
                         title = "Limiter strength",
                         value = ui.profile.limiterStrength,

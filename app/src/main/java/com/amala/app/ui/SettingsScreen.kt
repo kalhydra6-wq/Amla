@@ -28,6 +28,8 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
             Text("Settings", style = MaterialTheme.typography.titleLarge)
         }
 
+        item { AppearanceCard(ui, viewModel) }
+
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {

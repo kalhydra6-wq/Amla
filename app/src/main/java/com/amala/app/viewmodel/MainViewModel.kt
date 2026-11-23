@@ -15,6 +15,7 @@ import com.amala.app.model.AudioDevices
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
+import com.amala.app.model.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +46,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val autoGainProtection: Boolean = true,
         val abCompareActive: Boolean = false,
         val totalBoostDb: Float = 0f,
+        val themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
+        val accentColor: Int = 0xFF007C70.toInt(),
         val storedProfiles: List<Pair<String, EqualizerProfile>> = emptyList(),
         val message: String? = null,
     )
@@ -71,6 +74,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isRealme = Build.MANUFACTURER.equals("realme", ignoreCase = true),
             keepAlive = preferences.keepAlive,
             autoGainProtection = preferences.autoGainProtection,
+            themeMode = preferences.themeMode,
+            accentColor = preferences.accentColor,
             totalBoostDb = ProfileMath.totalBoostDb(AudioController.profile),
             bandCount = AudioController.bandCount,
             minLevel = AudioController.minLevel,
@@ -246,6 +251,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         commit(profile)
         setMessage("Profile loaded")
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        preferences.themeMode = mode
+        _ui.update { it.copy(themeMode = mode) }
+    }
+
+    fun setAccentColor(argb: Int) {
+        preferences.accentColor = argb
+        _ui.update { it.copy(accentColor = argb) }
     }
 
     fun setAutoGainProtection(enabled: Boolean) {

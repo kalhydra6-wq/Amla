@@ -18,6 +18,12 @@ class InMemoryStore : KeyValueStore {
         values[key] = value
     }
 
+    override fun getInt(key: String, fallback: Int): Int = values[key] as? Int ?: fallback
+
+    override fun putInt(key: String, value: Int) {
+        values[key] = value
+    }
+
     override fun remove(key: String) {
         values.remove(key)
     }

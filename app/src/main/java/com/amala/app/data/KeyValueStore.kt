@@ -9,6 +9,8 @@ interface KeyValueStore {
     fun putString(key: String, value: String)
     fun getBoolean(key: String, fallback: Boolean): Boolean
     fun putBoolean(key: String, value: Boolean)
+    fun getInt(key: String, fallback: Int): Int
+    fun putInt(key: String, value: Int)
     fun remove(key: String)
     fun keys(): Set<String>
 }
@@ -29,6 +31,12 @@ class SharedPreferencesStore(context: Context) : KeyValueStore {
 
     override fun putBoolean(key: String, value: Boolean) {
         preferences.edit().putBoolean(key, value).apply()
+    }
+
+    override fun getInt(key: String, fallback: Int): Int = preferences.getInt(key, fallback)
+
+    override fun putInt(key: String, value: Int) {
+        preferences.edit().putInt(key, value).apply()
     }
 
     override fun remove(key: String) {

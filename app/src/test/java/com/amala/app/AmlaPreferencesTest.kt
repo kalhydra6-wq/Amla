@@ -3,6 +3,7 @@ package com.amala.app
 import com.amala.app.data.AmlaPreferences
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
+import com.amala.app.model.ThemeMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -26,6 +27,8 @@ class AmlaPreferencesTest {
         assertTrue(preferences.autoApply)
         assertTrue(preferences.effectsEnabled)
         assertTrue(preferences.autoGainProtection)
+        assertEquals(ThemeMode.FOLLOW_SYSTEM, preferences.themeMode)
+        assertEquals(0xFF007C70.toInt(), preferences.accentColor)
         assertNull(preferences.lastDeviceId)
     }
 
@@ -99,5 +102,10 @@ class AmlaPreferencesTest {
         assertFalse(preferences.effectsEnabled)
         assertEquals("BLUETOOTH:speaker", preferences.lastDeviceId)
         assertFalse(preferences.autoGainProtection)
+
+        preferences.themeMode = ThemeMode.AMOLED
+        preferences.accentColor = 0xFFC2185B.toInt()
+        assertEquals(ThemeMode.AMOLED, preferences.themeMode)
+        assertEquals(0xFFC2185B.toInt(), preferences.accentColor)
     }
 }
