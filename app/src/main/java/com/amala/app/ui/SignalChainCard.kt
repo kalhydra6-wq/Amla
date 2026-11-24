@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -125,7 +127,7 @@ fun SignalChainCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                 ChainBlocks(device, ui, context, probe, hasRecord) { requestRecord.launch(Manifest.permission.RECORD_AUDIO) }
                 Spacer(Modifier.height(12.dp))
                 Badges(ui, device, context, probe)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(8.dp))
                 CompactRow(device)
             }
         }
@@ -158,7 +160,7 @@ private fun Header(device: AudioDevice?, context: Context) {
     } else {
         Text(
             text = if (device?.category == com.amala.app.model.DeviceCategory.USB_DAC) {
-                "${device.typeLabel} · VID ${AudioSignal.NA} · PID ${AudioSignal.NA} (not matched)"
+                "${device.typeLabel} · VID/PID unavailable"
             } else {
                 device?.typeLabel ?: "Waiting for audio output"
             },
@@ -198,7 +200,7 @@ private fun NowPlayingBlock(
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                text = info.title ?: "No track info",
+                text = info.title ?: AudioSignal.NA,
                 style = MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -221,10 +223,8 @@ private fun NowPlayingBlock(
     }
     if (!info.permissionGranted) {
         Text(
-            text = "Allow notification access for song title, artist and album art. Amla reads only media metadata — nothing is stored or sent anywhere.\n" +
-                "Manual steps: Settings → Notifications & status bar → Notification access → enable Amla. " +
-                "If your phone shows 'Restricted setting', use Settings search for 'Notification access'. " +
-                "Song info will show N/A if this stays off — the equalizer works normally.",
+            text = "Amla reads only media metadata (title, artist, album art, app) — nothing is stored or sent. " +
+                "If this page is restricted, use Settings search for 'Notification access'. Without it, track info stays N/A.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -233,7 +233,7 @@ private fun NowPlayingBlock(
                 context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             }
         }) {
-            Text("Open notification access")
+            Text("Enable track info")
         }
     }
 }
@@ -369,11 +369,16 @@ private fun Badges(
         add(if (ui.effectsEnabled && ui.engineStatus?.hasControl == true) "Amla DSP ON" else "Amla DSP OFF")
         addAll(effects)
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        badges.take(6).forEach { label ->
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        badges.forEach { label ->
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                softWrap = false,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .background(
@@ -384,16 +389,29 @@ private fun Badges(
             )
         }
     }
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(6.dp))
+    val silent = peak != null && peak < -8_000
     Text(
-        text = "Signal: " + if (peak != null) {
-            "${String.format(java.util.Locale.US, "%.1f", peak / 100f)} dBFS (live)"
-        } else {
-            AudioSignal.NA
+        text = "Signal: " + when {
+            peak == null -> AudioSignal.NA
+            silent -> "Silence"
+            else -> "${String.format(java.util.Locale.US, "%.1f", peak / 100f)} dBFS"
         },
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    if (peak != null && !silent) {
+        Spacer(Modifier.height(3.dp))
+        val progress = ((peak + 8_000) / 8_000f).coerceIn(0f, 1f)
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        )
+    }
     if (device?.category == com.amala.app.model.DeviceCategory.USB_DAC ||
         device?.category == com.amala.app.model.DeviceCategory.BLUETOOTH
     ) {

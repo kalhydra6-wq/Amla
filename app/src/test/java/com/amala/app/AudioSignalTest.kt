@@ -16,6 +16,10 @@ class AudioSignalTest {
         assertEquals(AudioSignal.NA, AudioSignal.codecName(null))
         assertEquals(AudioSignal.NA, AudioSignal.formatChannels(null))
         assertEquals(AudioSignal.NA, AudioSignal.formatBitrate(null))
+        assertEquals(AudioSignal.NA, AudioSignal.formatRate(0))
+        assertEquals(AudioSignal.NA, AudioSignal.formatRateCompact(0))
+        assertEquals(AudioSignal.NA, AudioSignal.formatDepth(0))
+        assertEquals(AudioSignal.NA, AudioSignal.formatChannels(0))
     }
 
     @Test
