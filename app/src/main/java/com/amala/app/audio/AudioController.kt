@@ -3,6 +3,8 @@ package com.amala.app.audio
 import android.content.Context
 import com.amala.app.data.AmlaPreferences
 import com.amala.app.data.SharedPreferencesStore
+import com.amala.app.ui.AmlaTileService
+import com.amala.app.ui.AmlaWidget
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
@@ -44,7 +46,7 @@ object AudioController {
 
     fun initialize(context: Context) {
         appContext = context.applicationContext
-        preferences = AmlaPreferences(appContext)
+        preferences = AmlaPreferences(SharedPreferencesStore(appContext))
         enabledState = preferences.effectsEnabled
         engine.initialize()
         val stored = preferences.lastDeviceId?.let { preferences.loadProfile(it) }
