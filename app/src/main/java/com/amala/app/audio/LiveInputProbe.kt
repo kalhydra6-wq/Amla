@@ -37,7 +37,7 @@ object LiveInputProbe {
             ?.let { it / 1_000_000 } // Visualizer reports millihertz.
         val measurement = Visualizer.MeasurementPeakRms()
         val status = runCatching { effect.getMeasurementPeakRms(measurement) }.getOrDefault(-1)
-        val peak = if (status == Visualizer.SUCCESS && measurement.peak >= -9_600) measurement.peak else null
+        val peak = if (status == Visualizer.SUCCESS && measurement.mPeak >= -9_600) measurement.mPeak else null
         _state.value = Info(sampleRateHz = rateHz, peakMdB = peak, available = true)
     }
 
