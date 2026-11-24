@@ -4,13 +4,40 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:scaleX="3"
-        android:scaleY="3"
-        android:translateX="18"
-        android:translateY="18">
+
+    <!-- stem -->
+    <path
+        android:pathData="M54,28 L57,21"
+        android:strokeColor="#7A5A32"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+
+    <!-- amla fruit -->
+    <path
+        android:pathData="M54,25 a31,31 0 1,0 0,62 a31,31 0 1,0 0,-62"
+        android:fillColor="#4C9A2A"
+        android:strokeColor="#2F6B1B"
+        android:strokeWidth="2" />
+
+    <!-- ridges shaped as five equalizer bars, clipped to the fruit -->
+    <group>
+        <clip-path android:pathData="M54,25 a31,31 0 1,0 0,62 a31,31 0 1,0 0,-62" />
         <path
-            android:fillColor="#1F2A44"
-            android:pathData="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+            android:pathData="M38,80 L38,68 M47,80 L47,50 M56,80 L56,40 M65,80 L65,56 M74,80 L74,66"
+            android:strokeColor="#CDEAA6"
+            android:strokeWidth="5"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M42,80 L42,74 M51,80 L51,62 M60,80 L60,46 M69,80 L69,62"
+            android:strokeColor="#2F6B1B"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeAlpha="0.55" />
     </group>
+
+    <!-- soft highlight -->
+    <path
+        android:pathData="M38,46 a12,6 0 1,0 10,-9 a12,6 0 1,0 -10,9"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.22" />
 </vector>
