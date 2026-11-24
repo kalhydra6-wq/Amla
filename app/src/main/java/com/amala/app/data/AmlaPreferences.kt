@@ -29,6 +29,14 @@ class AmlaPreferences(private val store: KeyValueStore) {
         get() = store.getBoolean(KEY_EFFECTS_ENABLED, true)
         set(value) = store.putBoolean(KEY_EFFECTS_ENABLED, value)
 
+    var softStartEnabled: Boolean
+        get() = store.getBoolean(KEY_SOFT_START, true)
+        set(value) = store.putBoolean(KEY_SOFT_START, value)
+
+    var softStartSeconds: Int
+        get() = store.getInt(KEY_SOFT_START_SECONDS, 2).takeIf { it in listOf(1, 2, 3, 5) } ?: 2
+        set(value) = store.putInt(KEY_SOFT_START_SECONDS, value.takeIf { it in listOf(1, 2, 3, 5) } ?: 2)
+
     var autoGainProtection: Boolean
         get() = store.getBoolean(KEY_AUTO_GAIN, true)
         set(value) = store.putBoolean(KEY_AUTO_GAIN, value)
@@ -107,6 +115,8 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val KEY_EFFECTS_ENABLED = "setting:effects_enabled"
         private const val KEY_KEEP_ALIVE = "setting:keep_alive"
         private const val KEY_AUTO_GAIN = "setting:auto_gain"
+        private const val KEY_SOFT_START = "setting:soft_start"
+        private const val KEY_SOFT_START_SECONDS = "setting:soft_start_seconds"
         private const val KEY_LAST_DEVICE = "last_device_id"
         private const val KEY_THEME_MODE = "appearance:theme_mode"
         private const val KEY_ACCENT_COLOR = "appearance:accent_color"

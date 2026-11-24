@@ -4,4 +4,14 @@
     <string name="widget_description">Toggle the equalizer and switch presets</string>
     <string name="qs_tile_label">Amla EQ</string>
     <string name="notification_channel">Amla audio controls</string>
+
+    <string name="soft_start_title">Soft start</string>
+    <string name="soft_start_subtitle">Gradually raise the volume when you connect a new output</string>
+    <string name="soft_start_info">When headphones, a USB DAC or Bluetooth connect, Amla starts the music at a low volume and slowly raises it to your current level. This helps protect your ears from a sudden loud sound. It changes only the system media volume, never your saved EQ.</string>
+    <string name="soft_start_duration">Fade duration</string>
+    <string name="soft_start_1s">1 sec</string>
+    <string name="soft_start_2s">2 sec</string>
+    <string name="soft_start_3s">3 sec</string>
+    <string name="soft_start_5s">5 sec</string>
+    <string name="soft_start_not_supported">Not supported on this device</string>
 </resources>

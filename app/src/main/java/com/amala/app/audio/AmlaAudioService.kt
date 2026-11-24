@@ -7,11 +7,18 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.amala.app.MainActivity
 import com.amala.app.R
+import com.amala.app.data.AmlaPreferences
+import com.amala.app.data.SharedPreferencesStore
 import com.amala.app.ui.AmlaTileService
 import com.amala.app.ui.AmlaWidget
 import kotlinx.coroutines.CoroutineScope
@@ -25,11 +32,32 @@ import kotlinx.coroutines.launch
 class AmlaAudioService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val audioManager by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+    private val deviceHandler = Handler(Looper.getMainLooper())
+    private var ignoreFirstDeviceEvent = true
+    private val deviceCallback = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) = onDeviceChange()
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) = onDeviceChange()
+    }
+
+    private fun onDeviceChange() {
+        if (ignoreFirstDeviceEvent) {
+            ignoreFirstDeviceEvent = false
+            return
+        }
+        val prefs = AmlaPreferences(SharedPreferencesStore(applicationContext))
+        SoftStartController.onOutputDeviceChanged(
+            applicationContext,
+            prefs.softStartEnabled,
+            prefs.softStartSeconds,
+        )
+    }
 
     override fun onCreate() {
         super.onCreate()
         createChannel()
         startForegroundCompat()
+        runCatching { audioManager.registerAudioDeviceCallback(deviceCallback, deviceHandler) }
         scope.launch {
             while (true) {
                 delay(REAPPLY_INTERVAL_MS)
@@ -67,6 +95,8 @@ class AmlaAudioService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        runCatching { audioManager.unregisterAudioDeviceCallback(deviceCallback) }
+        SoftStartController.cancel()
         scope.cancel()
         super.onDestroy()
     }

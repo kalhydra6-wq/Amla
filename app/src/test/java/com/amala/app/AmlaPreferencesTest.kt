@@ -27,6 +27,8 @@ class AmlaPreferencesTest {
         assertTrue(preferences.autoApply)
         assertTrue(preferences.effectsEnabled)
         assertTrue(preferences.autoGainProtection)
+        assertTrue(preferences.softStartEnabled)
+        assertEquals(2, preferences.softStartSeconds)
         assertEquals(ThemeMode.FOLLOW_SYSTEM, preferences.themeMode)
         assertEquals(0xFF007C70.toInt(), preferences.accentColor)
         assertNull(preferences.lastDeviceId)
@@ -98,10 +100,14 @@ class AmlaPreferencesTest {
         preferences.effectsEnabled = false
         preferences.lastDeviceId = "BLUETOOTH:speaker"
         preferences.autoGainProtection = false
+        preferences.softStartEnabled = false
+        preferences.softStartSeconds = 5
         assertFalse(preferences.autoApply)
         assertFalse(preferences.effectsEnabled)
         assertEquals("BLUETOOTH:speaker", preferences.lastDeviceId)
         assertFalse(preferences.autoGainProtection)
+        assertFalse(preferences.softStartEnabled)
+        assertEquals(5, preferences.softStartSeconds)
 
         preferences.themeMode = ThemeMode.AMOLED
         preferences.accentColor = 0xFFC2185B.toInt()

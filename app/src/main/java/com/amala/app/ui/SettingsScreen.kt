@@ -14,13 +14,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.amala.app.R
 import com.amala.app.viewmodel.MainViewModel
 
 @Composable
@@ -33,6 +36,8 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         item {
             Text("Settings", style = MaterialTheme.typography.titleLarge)
         }
+
+        item { SoftStartCard(ui, viewModel) }
 
         item { QuickControlsHelpCard() }
 
@@ -182,6 +187,60 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SoftStartCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.soft_start_title), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.soft_start_subtitle),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = ui.softStartEnabled,
+                    onCheckedChange = { viewModel.setSoftStartEnabled(it) },
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.soft_start_info),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+            Text(stringResource(R.string.soft_start_duration), style = MaterialTheme.typography.labelMedium)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(1, 2, 3, 5).forEach { seconds ->
+                    val label = when (seconds) {
+                        1 -> stringResource(R.string.soft_start_1s)
+                        2 -> stringResource(R.string.soft_start_2s)
+                        3 -> stringResource(R.string.soft_start_3s)
+                        else -> stringResource(R.string.soft_start_5s)
+                    }
+                    FilterChip(
+                        selected = ui.softStartSeconds == seconds,
+                        onClick = { viewModel.setSoftStartSeconds(seconds) },
+                        enabled = ui.softStartEnabled,
+                        label = { Text(label) },
+                    )
+                }
             }
         }
     }

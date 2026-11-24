@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.amala.app.audio.AudioController
 import com.amala.app.audio.AudioDeviceDetector
 import com.amala.app.audio.AudioEngine
+import com.amala.app.audio.SoftStartController
 import com.amala.app.data.AmlaPreferences
 import com.amala.app.data.SharedPreferencesStore
 import com.amala.app.model.AudioDevice
@@ -35,6 +36,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val maxLevel: Int = DEFAULT_MAX,
         val frequencies: List<Int> = listOf(60, 230, 910, 3_600, 14_000),
         val autoApply: Boolean = true,
+        val softStartEnabled: Boolean = true,
+        val softStartSeconds: Int = 2,
         val effectsEnabled: Boolean = true,
         val engineStatus: AudioEngine.Status? = null,
         val bassBoostSupported: Boolean = false,
@@ -59,6 +62,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var detector: AudioDeviceDetector? = null
     private var manuallySelected = false
     private var lastAppliedDeviceId: String? = null
+    private var lastDeviceIdForFade: String? = null
+    private var firstDeviceEvent = true
     private var profileBeforeCompare: EqualizerProfile? = null
 
     private val _ui = MutableStateFlow(UiState())
@@ -73,6 +78,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             signalChainEnabled = preferences.signalChainEnabled,
             crashReport = crash,
             autoApply = preferences.autoApply,
+            softStartEnabled = preferences.softStartEnabled,
+            softStartSeconds = preferences.softStartSeconds,
             effectsEnabled = AudioController.enabled,
             engineStatus = AudioController.status(),
             bassBoostSupported = AudioController.bassBoostSupported,
@@ -114,6 +121,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun onDevicesChanged(devices: List<AudioDevice>) {
         val active = AudioDevices.activeDevice(devices)
+        val currentDeviceId = active?.id
+        if (!firstDeviceEvent && currentDeviceId != null && currentDeviceId != lastDeviceIdForFade) {
+            SoftStartController.onOutputDeviceChanged(
+                getApplication(),
+                preferences.softStartEnabled,
+                preferences.softStartSeconds,
+            )
+        }
+        firstDeviceEvent = false
+        lastDeviceIdForFade = currentDeviceId
         val selected = if (manuallySelected && _ui.value.selectedDevice != null) {
             _ui.value.selectedDevice
         } else {
@@ -224,6 +241,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         AudioController.setEnabled(enabled)
         _ui.update { it.copy(effectsEnabled = enabled, engineStatus = AudioController.status()) }
         setMessage(if (enabled) "Equalizer enabled" else "Equalizer bypassed")
+    }
+
+    fun setSoftStartEnabled(enabled: Boolean) {
+        preferences.softStartEnabled = enabled
+        _ui.update { it.copy(softStartEnabled = enabled) }
+        if (!enabled) SoftStartController.cancel()
+    }
+
+    fun setSoftStartSeconds(seconds: Int) {
+        preferences.softStartSeconds = seconds
+        _ui.update { it.copy(softStartSeconds = seconds) }
     }
 
     fun setAutoApply(enabled: Boolean) {
