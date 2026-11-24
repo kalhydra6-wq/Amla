@@ -47,6 +47,13 @@ class AudioSignalTest {
     }
 
     @Test
+    fun `real device capability lists are formatted`() {
+        assertEquals("44.1k 48k 96k", AudioSignal.formatRates(listOf(44_100, 48_000, 96_000)))
+        assertEquals(AudioSignal.NA, AudioSignal.formatRates(emptyList()))
+        assertEquals("PCM", AudioSignal.formatCodecs(listOf(AudioFormat.ENCODING_PCM_16BIT)))
+    }
+
+    @Test
     fun `usb ids are printed as hexadecimal`() {
         assertEquals("0x1234", AudioSignal.formatVendorId(0x1234))
     }

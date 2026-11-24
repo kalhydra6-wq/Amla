@@ -76,4 +76,18 @@ object AudioSignal {
 
     fun formatBitrate(bitrate: Int?): String =
         if (bitrate == null || bitrate <= 0) NA else "${bitrate / 1000} kbps"
+
+    /** A compact, real list of rates an output device reports. */
+    fun formatRates(rates: List<Int>): String {
+        val useful = rates.filter { it > 0 }.distinct().sorted()
+        if (useful.isEmpty()) return NA
+        val shown = useful.take(4).joinToString(" ") { "${it / 1000}k" }
+        return if (useful.size > 4) "$shown +${useful.size - 4}" else shown
+    }
+
+    /** Unique codec names from the encodings a device reports. */
+    fun formatCodecs(encodings: List<Int>): String {
+        val names = encodings.map(::codecName).filter { it != NA }.distinct()
+        return if (names.isEmpty()) NA else names.take(3).joinToString(" / ")
+    }
 }

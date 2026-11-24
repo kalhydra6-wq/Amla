@@ -2,6 +2,8 @@ package com.amala.app.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.Manifest
 import android.graphics.Bitmap
 import android.media.AudioManager
 import android.provider.Settings
@@ -32,8 +34,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.delay
+import com.amala.app.audio.LiveInputProbe
 import com.amala.app.audio.NowPlayingRepository
 import com.amala.app.audio.UsbDeviceLookup
 import com.amala.app.model.AudioDevice
@@ -59,11 +68,36 @@ import com.amala.app.viewmodel.MainViewModel
 fun SignalChainCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
     val context = LocalContext.current
     val nowPlaying by NowPlayingRepository.state.collectAsStateWithLifecycle()
+    val probe by LiveInputProbe.state.collectAsStateWithLifecycle()
     val device = ui.selectedDevice ?: ui.activeDevice
+    var hasRecord by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    val requestRecord = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        hasRecord = granted
+        if (granted) LiveInputProbe.start()
+    }
 
     LaunchedEffect(Unit) { NowPlayingRepository.refresh(context) }
     LaunchedEffect(device?.id) { NowPlayingRepository.refresh(context) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { NowPlayingRepository.refresh(context) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        NowPlayingRepository.refresh(context)
+        if (hasRecord) LiveInputProbe.start()
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { LiveInputProbe.stop() }
+    DisposableEffect(hasRecord) {
+        if (hasRecord) LiveInputProbe.start()
+        onDispose { LiveInputProbe.stop() }
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            LiveInputProbe.refresh()
+            delay(700)
+        }
+    }
 
     val border = Brush.linearGradient(
         listOf(
@@ -87,9 +121,9 @@ fun SignalChainCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                 Spacer(Modifier.height(10.dp))
                 NowPlayingBlock(nowPlaying, context)
                 Spacer(Modifier.height(14.dp))
-                ChainBlocks(device, ui, context)
+                ChainBlocks(device, ui, context, probe, hasRecord) { requestRecord.launch(Manifest.permission.RECORD_AUDIO) }
                 Spacer(Modifier.height(12.dp))
-                Badges(ui, device, context)
+                Badges(ui, device, context, probe)
                 Spacer(Modifier.height(12.dp))
                 CompactRow(device)
             }
@@ -122,7 +156,11 @@ private fun Header(device: AudioDevice?, context: Context) {
         )
     } else {
         Text(
-            text = device?.typeLabel ?: "Waiting for audio output",
+            text = if (device?.category == com.amala.app.model.DeviceCategory.USB_DAC) {
+                "${device.typeLabel} · VID ${AudioSignal.NA} · PID ${AudioSignal.NA} (not matched)"
+            } else {
+                device?.typeLabel ?: "Waiting for audio output"
+            },
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -200,7 +238,14 @@ private fun NowPlayingBlock(
 }
 
 @Composable
-private fun ChainBlocks(device: AudioDevice?, ui: MainViewModel.UiState, context: Context) {
+private fun ChainBlocks(
+    device: AudioDevice?,
+    ui: MainViewModel.UiState,
+    context: Context,
+    probe: LiveInputProbe.Info,
+    hasRecord: Boolean,
+    onRequestRecord: () -> Unit,
+) {
     val outputRate = outputRate(context, device)
     val bestEncoding = device?.encodings
         ?.filter { it == android.media.AudioFormat.ENCODING_PCM_FLOAT || it == android.media.AudioFormat.ENCODING_PCM_16BIT || it == android.media.AudioFormat.ENCODING_PCM_8BIT }
@@ -210,11 +255,21 @@ private fun ChainBlocks(device: AudioDevice?, ui: MainViewModel.UiState, context
         Column(Modifier.weight(1f)) {
             Text("INPUT", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(4.dp))
-            SpecLine("Sample rate", AudioSignal.NA)
+            SpecLine("Sample rate", AudioSignal.formatRate(probe.sampleRateHz))
             SpecLine("Bit depth", AudioSignal.NA)
             SpecLine("Channels", AudioSignal.NA)
             SpecLine("Codec", AudioSignal.NA)
             SpecLine("Bitrate", AudioSignal.NA)
+            if (!hasRecord) {
+                Text(
+                    text = "Live input rate needs mic permission (Visualizer reads the audio mix only — never records audio).",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = onRequestRecord) {
+                    Text("Enable live input")
+                }
+            }
         }
 
         DspChip(active = ui.effectsEnabled && ui.engineStatus?.hasControl == true)
@@ -226,6 +281,8 @@ private fun ChainBlocks(device: AudioDevice?, ui: MainViewModel.UiState, context
             SpecLine("Bit depth", AudioSignal.formatDepth(bestEncoding))
             SpecLine("Channels", AudioSignal.formatChannels(device?.channelCounts?.maxOrNull()))
             SpecLine("Codec", AudioSignal.codecName(bestEncoding))
+            SpecLine("Rates", AudioSignal.formatRates(device?.sampleRates.orEmpty()))
+            SpecLine("Formats", AudioSignal.formatCodecs(device?.encodings.orEmpty()))
             SpecLine("Type", device?.category?.displayName ?: AudioSignal.NA)
         }
     }
@@ -286,8 +343,14 @@ private fun SpecLine(label: String, value: String) {
 }
 
 @Composable
-private fun Badges(ui: MainViewModel.UiState, device: AudioDevice?, context: Context) {
+private fun Badges(
+    ui: MainViewModel.UiState,
+    device: AudioDevice?,
+    context: Context,
+    probe: LiveInputProbe.Info,
+) {
     val outputRate = outputRate(context, device)
+    val peak = probe.peakMdB
     val bestEncoding = device?.encodings
         ?.filter { AudioSignal.bitDepth(it) != null }
         ?.maxByOrNull { AudioSignal.bitDepth(it) ?: 0 }
@@ -319,6 +382,26 @@ private fun Badges(ui: MainViewModel.UiState, device: AudioDevice?, context: Con
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
+    }
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = "Signal: " + if (peak != null) {
+            "${String.format(java.util.Locale.US, "%.1f", peak / 100f)} dBFS (live)"
+        } else {
+            AudioSignal.NA
+        },
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    if (device?.category == com.amala.app.model.DeviceCategory.USB_DAC ||
+        device?.category == com.amala.app.model.DeviceCategory.BLUETOOTH
+    ) {
+        Text(
+            text = "Note: Android may bypass global EQ on USB/Bluetooth outputs. If sound does not change, " +
+                "check Settings → Audio engine and try Reinitialize.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
