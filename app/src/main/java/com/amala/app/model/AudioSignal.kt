@@ -81,8 +81,17 @@ object AudioSignal {
     fun formatRates(rates: List<Int>): String {
         val useful = rates.filter { it > 0 }.distinct().sorted()
         if (useful.isEmpty()) return NA
-        val shown = useful.take(4).joinToString(" ") { "${it / 1000}k" }
+        val shown = useful.take(4).joinToString(" ") { rateLabel(it) }
         return if (useful.size > 4) "$shown +${useful.size - 4}" else shown
+    }
+
+    private fun rateLabel(rate: Int): String {
+        val value = rate / 1000f
+        return if (value == value.toInt().toFloat()) {
+            "${value.toInt()}k"
+        } else {
+            String.format(Locale.US, "%.1f", value) + "k"
+        }
     }
 
     /** Unique codec names from the encodings a device reports. */
