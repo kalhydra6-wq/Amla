@@ -3,12 +3,18 @@ package com.amala.app.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -27,6 +33,8 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         item {
             Text("Settings", style = MaterialTheme.typography.titleLarge)
         }
+
+        item { QuickControlsHelpCard() }
 
         item { AppearanceCard(ui, viewModel) }
 
@@ -177,6 +185,53 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
             }
         }
     }
+}
+
+@Composable
+private fun QuickControlsHelpCard() {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Quick controls", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            InfoLine(
+                "Notification",
+                "Amla's persistent notification has EQ on/off, previous/next preset and bass +/- buttons. " +
+                    "It works even when the app is closed.",
+            )
+            InfoLine(
+                "Home-screen widget",
+                "Add the Amla widget to your home screen. Tap EQ ON/OFF to bypass the sound, " +
+                    "tap the preset name to open Amla, or tap Next to cycle presets.",
+            )
+            InfoLine(
+                "Quick Settings tile",
+                "Add the Amla tile from the Quick Settings edit screen. The tile is highlighted " +
+                    "when the equalizer is active.",
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoLine(title: String, body: String) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Icon(
+            Icons.Filled.Info,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.width(20.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                body,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+    Spacer(Modifier.height(8.dp))
 }
 
 @Composable

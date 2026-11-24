@@ -94,6 +94,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             storedProfiles = preferences.storedProfiles(),
         )
 
+        viewModelScope.launch {
+            AudioController.stateVersion.collect {
+                _ui.update { state ->
+                    state.copy(
+                        profile = AudioController.profile,
+                        effectsEnabled = AudioController.enabled,
+                        engineStatus = AudioController.status(),
+                        totalBoostDb = ProfileMath.totalBoostDb(AudioController.profile),
+                        storedProfiles = preferences.storedProfiles(),
+                    )
+                }
+            }
+        }
+
         detector = AudioDeviceDetector(application) { devices -> onDevicesChanged(devices) }
         detector?.start()
     }

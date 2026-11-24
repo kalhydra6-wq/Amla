@@ -12,6 +12,8 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.amala.app.MainActivity
 import com.amala.app.R
+import com.amala.app.ui.AmlaTileService
+import com.amala.app.ui.AmlaWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,10 +21,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * Keeps the equalizer applied while other apps play audio. Some players reset or
- * take over the global effect when they start; this service notices and reapplies.
- */
+/** Keeps the equalizer applied and exposes media-style controls in the foreground notification. */
 class AmlaAudioService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -40,14 +39,27 @@ class AmlaAudioService : Service() {
                 } else {
                     AudioController.refresh()
                 }
+                updateNotification()
             }
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            stopSelf()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_STOP -> {
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            ACTION_TOGGLE -> AudioController.toggleEnabled()
+            ACTION_PREV -> AudioController.cyclePreset(-1)
+            ACTION_NEXT -> AudioController.cyclePreset(1)
+            ACTION_BASS_UP -> AudioController.adjustBass(100)
+            ACTION_BASS_DOWN -> AudioController.adjustBass(-100)
+        }
+        if (intent?.action != null) {
+            updateNotification()
+            runCatching { AmlaWidget.update(this) }
+            AmlaTileService.requestUpdate(this)
         }
         return START_STICKY
     }
@@ -63,36 +75,62 @@ class AmlaAudioService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Amla audio",
+                getString(R.string.notification_channel),
                 NotificationManager.IMPORTANCE_LOW,
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
-    private fun startForegroundCompat() {
+    private fun actionIntent(action: String, requestCode: Int): PendingIntent = PendingIntent.getService(
+        this,
+        requestCode,
+        Intent(this, AmlaAudioService::class.java).setAction(action),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    private fun buildNotification(): android.app.Notification {
         val openApp = PendingIntent.getActivity(
             this,
             0,
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val on = AudioController.enabled
+        val preset = AudioController.profile.preset.label
+        val bass = AudioController.profile.bassBoost / 10
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_amla)
-            .setContentTitle("Amla equalizer active")
-            .setContentText("Keeping your sound applied across apps")
+            .setContentTitle("Amla · ${if (on) "EQ on" else "EQ off"}")
+            .setContentText("Preset: $preset · Bass $bass%")
             .setContentIntent(openApp)
             .setOngoing(true)
-            .build()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
+            .setOnlyAlertOnce(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .addAction(R.drawable.ic_action_eq, if (on) "EQ off" else "EQ on", actionIntent(ACTION_TOGGLE, 1))
+            .addAction(R.drawable.ic_action_prev, "Previous", actionIntent(ACTION_PREV, 2))
+            .addAction(R.drawable.ic_action_next, "Next", actionIntent(ACTION_NEXT, 3))
+            .addAction(R.drawable.ic_action_bass_down, "Bass -", actionIntent(ACTION_BASS_DOWN, 4))
+            .addAction(R.drawable.ic_action_bass_up, "Bass +", actionIntent(ACTION_BASS_UP, 5))
+            .setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setShowActionsInCompactView(0, 1, 2),
             )
+            .build()
+    }
+
+    private fun startForegroundCompat() {
+        val notification = buildNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         } else {
             startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun updateNotification() {
+        runCatching {
+            getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification())
         }
     }
 
@@ -101,6 +139,11 @@ class AmlaAudioService : Service() {
         private const val NOTIFICATION_ID = 1001
         private const val REAPPLY_INTERVAL_MS = 5_000L
         private const val ACTION_STOP = "com.amala.app.STOP_SERVICE"
+        private const val ACTION_TOGGLE = "com.amala.app.NOTIF_TOGGLE"
+        private const val ACTION_PREV = "com.amala.app.NOTIF_PREV"
+        private const val ACTION_NEXT = "com.amala.app.NOTIF_NEXT"
+        private const val ACTION_BASS_UP = "com.amala.app.NOTIF_BASS_UP"
+        private const val ACTION_BASS_DOWN = "com.amala.app.NOTIF_BASS_DOWN"
 
         fun start(context: Context) {
             val intent = Intent(context, AmlaAudioService::class.java)

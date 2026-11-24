@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Amla</string>
+    <string name="widget_description">Toggle the equalizer and switch presets</string>
+    <string name="qs_tile_label">Amla EQ</string>
+    <string name="notification_channel">Amla audio controls</string>
 </resources>
