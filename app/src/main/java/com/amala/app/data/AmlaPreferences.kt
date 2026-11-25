@@ -17,6 +17,19 @@ class AmlaPreferences(private val store: KeyValueStore) {
         get() = store.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT)
         set(value) = store.putInt(KEY_ACCENT_COLOR, value)
 
+    /** One-time, versioned migration. Never touches a colour the user has saved. */
+    fun migrateThemeOnce() {
+        if (store.getInt(KEY_THEME_MIGRATION_VERSION, 0) >= THEME_MIGRATION_VERSION) return
+        if (KEY_ACCENT_COLOR !in store.keys()) store.putInt(KEY_ACCENT_COLOR, AMLA_GREEN)
+        if (KEY_THEME_MODE !in store.keys()) store.putString(KEY_THEME_MODE, ThemeMode.DARK.name)
+        store.putInt(KEY_THEME_MIGRATION_VERSION, THEME_MIGRATION_VERSION)
+    }
+
+    fun resetTheme() {
+        accentColor = AMLA_GREEN
+        themeMode = ThemeMode.DARK
+    }
+
     var signalChainEnabled: Boolean
         get() = store.getBoolean(KEY_SIGNAL_CHAIN, true)
         set(value) = store.putBoolean(KEY_SIGNAL_CHAIN, value)
@@ -121,6 +134,10 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val KEY_THEME_MODE = "appearance:theme_mode"
         private const val KEY_ACCENT_COLOR = "appearance:accent_color"
         private const val KEY_SIGNAL_CHAIN = "appearance:signal_chain"
-        private const val DEFAULT_ACCENT = 0xFF007C70.toInt()
+        private const val KEY_THEME_MIGRATION_VERSION = "appearance:theme_migration_version"
+        const val DEFAULT_ACCENT = 0xFF007C70.toInt()
+        const val AMLA_GREEN = 0xFF4C9A2A.toInt()
+        const val AMLA_PURPLE = 0xFF6D4BC4.toInt()
+        private const val THEME_MIGRATION_VERSION = 1
     }
 }

@@ -10,6 +10,7 @@ class AmlaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashLogger.install(this)
+        AmlaPreferences(SharedPreferencesStore(this)).migrateThemeOnce()
         AudioController.initialize(this)
         if (AmlaPreferences(SharedPreferencesStore(this)).keepAlive) {
             AmlaAudioService.start(this)

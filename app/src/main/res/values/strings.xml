@@ -14,4 +14,12 @@
     <string name="soft_start_3s">3 sec</string>
     <string name="soft_start_5s">5 sec</string>
     <string name="soft_start_not_supported">Not supported on this device</string>
+
+    <string name="built_in_themes">Built-in themes</string>
+    <string name="theme_amla_green">Amla Green</string>
+    <string name="theme_amla_purple">Amla Purple</string>
+    <string name="reset_theme">Reset theme</string>
+    <string name="reset_theme_message">Return to Amla Green with the Dark theme? Your other settings and profiles are kept.</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
 </resources>

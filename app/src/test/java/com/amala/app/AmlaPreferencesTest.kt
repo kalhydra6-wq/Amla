@@ -23,6 +23,33 @@ class AmlaPreferencesTest {
     }
 
     @Test
+    fun `fresh install gets Amla Green and Dark once`() {
+        preferences.migrateThemeOnce()
+        assertEquals(AmlaPreferences.AMLA_GREEN, preferences.accentColor)
+        assertEquals(ThemeMode.DARK, preferences.themeMode)
+
+        preferences.accentColor = AmlaPreferences.AMLA_PURPLE
+        preferences.migrateThemeOnce()
+        assertEquals(AmlaPreferences.AMLA_PURPLE, preferences.accentColor)
+    }
+
+    @Test
+    fun `migration never overwrites a saved colour`() {
+        store.putInt("appearance:accent_color", 0xFF6D4BC4.toInt())
+        preferences.migrateThemeOnce()
+        assertEquals(0xFF6D4BC4.toInt(), preferences.accentColor)
+    }
+
+    @Test
+    fun `reset theme returns to green and dark`() {
+        preferences.accentColor = AmlaPreferences.AMLA_PURPLE
+        preferences.themeMode = ThemeMode.AMOLED
+        preferences.resetTheme()
+        assertEquals(AmlaPreferences.AMLA_GREEN, preferences.accentColor)
+        assertEquals(ThemeMode.DARK, preferences.themeMode)
+    }
+
+    @Test
     fun `settings have sensible defaults`() {
         assertTrue(preferences.autoApply)
         assertTrue(preferences.effectsEnabled)

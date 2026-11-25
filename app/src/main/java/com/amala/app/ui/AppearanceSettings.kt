@@ -2,6 +2,7 @@ package com.amala.app.ui
 
 import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,15 +16,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,10 +41,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.amala.app.R
+import com.amala.app.data.AmlaPreferences
 import com.amala.app.model.AccentOption
 import com.amala.app.model.ThemeMode
 import com.amala.app.viewmodel.MainViewModel
+
+private val BUILT_IN = listOf(
+    AccentOption("Amla Green", AmlaPreferences.AMLA_GREEN),
+    AccentOption("Amla Purple", AmlaPreferences.AMLA_PURPLE),
+)
 
 private val ACCENTS = listOf(
     AccentOption("Teal", 0xFF007C70.toInt()),
@@ -57,6 +71,7 @@ private val ACCENTS = listOf(
 
 @Composable
 fun AppearanceCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
+    var showResetDialog by remember { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text("Appearance", style = MaterialTheme.typography.titleMedium)
@@ -71,6 +86,39 @@ fun AppearanceCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         onClick = { viewModel.setThemeMode(mode) },
                         label = { Text(mode.label) },
                     )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            Text(stringResource(R.string.built_in_themes), style = MaterialTheme.typography.labelMedium)
+            Spacer(Modifier.height(8.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(BUILT_IN) { theme ->
+                    val active = ui.accentColor == theme.argb
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .clickable { viewModel.setAccentColor(theme.argb) }
+                            .background(Color(theme.argb))
+                            .then(
+                                if (active) {
+                                    Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (active) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
                 }
             }
 
@@ -114,7 +162,36 @@ fun AppearanceCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
 
             Spacer(Modifier.height(14.dp))
             ThemePreview(ui.accentColor)
+
+            Spacer(Modifier.height(12.dp))
+            androidx.compose.material3.OutlinedButton(
+                onClick = { showResetDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.reset_theme))
+            }
         }
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(stringResource(R.string.reset_theme)) },
+            text = { Text(stringResource(R.string.reset_theme_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.resetTheme()
+                    showResetDialog = false
+                }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 

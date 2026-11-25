@@ -314,6 +314,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _ui.update { it.copy(crashReport = null) }
     }
 
+    fun resetTheme() {
+        preferences.resetTheme()
+        _ui.update {
+            it.copy(
+                themeMode = preferences.themeMode,
+                accentColor = preferences.accentColor,
+            )
+        }
+    }
+
     fun setThemeMode(mode: ThemeMode) {
         preferences.themeMode = mode
         _ui.update { it.copy(themeMode = mode) }
