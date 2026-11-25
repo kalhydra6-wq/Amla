@@ -225,8 +225,10 @@ private fun MoodCard(viewModel: MainViewModel) {
             Spacer(Modifier.height(10.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(SoundMoods.all, key = { it.key }) { mood ->
+                    val label = moodLabel(mood)
+                    val description = moodDescription(mood)
                     Surface(
-                        onClick = { viewModel.applyMood(mood, moodLabel(mood)) },
+                        onClick = { viewModel.applyMood(mood, label) },
                         shape = MaterialTheme.shapes.medium,
                         color = Color(mood.colorHex),
                         modifier = Modifier.size(width = 148.dp, height = 104.dp),
@@ -239,7 +241,7 @@ private fun MoodCard(viewModel: MainViewModel) {
                             )
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                moodDescription(mood),
+                                description,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = 0.85f),
                             )
