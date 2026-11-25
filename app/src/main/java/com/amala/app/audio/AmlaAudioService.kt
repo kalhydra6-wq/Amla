@@ -41,7 +41,7 @@ class AmlaAudioService : Service() {
     private val stopRunnable = Runnable { stopSelf() }
     private val playbackCallback = object : AudioManager.AudioPlaybackCallback() {
         override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
-            val playing = configs?.any { it.isActive() } == true
+            val playing = configs?.isNotEmpty() == true
             if (playing) {
                 idleHandler.removeCallbacks(stopRunnable)
             } else {
