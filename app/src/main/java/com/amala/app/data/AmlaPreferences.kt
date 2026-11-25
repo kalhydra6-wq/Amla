@@ -13,11 +13,15 @@ class AmlaPreferences(private val store: KeyValueStore) {
     /** Existing installs keep today's Always-on behaviour; fresh installs use Smart. */
     fun migrateBackgroundOnce() {
         if (store.getInt(KEY_BACKGROUND_MIGRATION_VERSION, 0) >= BACKGROUND_MIGRATION_VERSION) return
-        val existingInstall = store.keys().any { it !in setOf(KEY_BACKGROUND_MIGRATION_VERSION) }
-        store.putString(
-            KEY_BACKGROUND_MODE,
-            if (existingInstall) BackgroundMode.ALWAYS.name else BackgroundMode.SMART.name,
-        )
+        if (KEY_BACKGROUND_MODE !in store.keys()) {
+            val existingInstall = store.keys().any {
+                it != KEY_BACKGROUND_MIGRATION_VERSION && it != KEY_BACKGROUND_MODE
+            }
+            store.putString(
+                KEY_BACKGROUND_MODE,
+                if (existingInstall) BackgroundMode.ALWAYS.name else BackgroundMode.SMART.name,
+            )
+        }
         store.putInt(KEY_BACKGROUND_MIGRATION_VERSION, BACKGROUND_MIGRATION_VERSION)
     }
 
