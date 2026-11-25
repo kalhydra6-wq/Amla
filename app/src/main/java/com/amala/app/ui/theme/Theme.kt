@@ -45,24 +45,23 @@ internal fun ensureContrast(color: Color, dark: Boolean): Color {
 
 @Composable
 private fun animatedScheme(target: ColorScheme): ColorScheme {
-    fun anim(color: Color): Color = animateColorAsState(color, tween(300)).value
     return target.copy(
-        primary = anim(target.primary),
-        onPrimary = anim(target.onPrimary),
-        primaryContainer = anim(target.primaryContainer),
-        onPrimaryContainer = anim(target.onPrimaryContainer),
-        secondary = anim(target.secondary),
-        onSecondary = anim(target.onSecondary),
-        tertiary = anim(target.tertiary),
-        background = anim(target.background),
-        surface = anim(target.surface),
-        surfaceVariant = anim(target.surfaceVariant),
-        onBackground = anim(target.onBackground),
-        onSurface = anim(target.onSurface),
-        onSurfaceVariant = anim(target.onSurfaceVariant),
-        error = anim(target.error),
-        errorContainer = anim(target.errorContainer),
-        onErrorContainer = anim(target.onErrorContainer),
+        primary = animateColorAsState(target.primary, tween(300)).value,
+        onPrimary = animateColorAsState(target.onPrimary, tween(300)).value,
+        primaryContainer = animateColorAsState(target.primaryContainer, tween(300)).value,
+        onPrimaryContainer = animateColorAsState(target.onPrimaryContainer, tween(300)).value,
+        secondary = animateColorAsState(target.secondary, tween(300)).value,
+        onSecondary = animateColorAsState(target.onSecondary, tween(300)).value,
+        tertiary = animateColorAsState(target.tertiary, tween(300)).value,
+        background = animateColorAsState(target.background, tween(300)).value,
+        surface = animateColorAsState(target.surface, tween(300)).value,
+        surfaceVariant = animateColorAsState(target.surfaceVariant, tween(300)).value,
+        onBackground = animateColorAsState(target.onBackground, tween(300)).value,
+        onSurface = animateColorAsState(target.onSurface, tween(300)).value,
+        onSurfaceVariant = animateColorAsState(target.onSurfaceVariant, tween(300)).value,
+        error = animateColorAsState(target.error, tween(300)).value,
+        errorContainer = animateColorAsState(target.errorContainer, tween(300)).value,
+        onErrorContainer = animateColorAsState(target.onErrorContainer, tween(300)).value,
     )
 }
 
