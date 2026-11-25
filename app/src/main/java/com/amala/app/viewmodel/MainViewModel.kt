@@ -18,6 +18,7 @@ import com.amala.app.model.AudioDevices
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
+import com.amala.app.model.SoundMood
 import com.amala.app.model.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -200,6 +201,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         while (bands.size < state.bandCount) bands.add(0)
         bands[index] = level.coerceIn(state.minLevel, state.maxLevel)
         commit(state.profile.copy(bands = bands, preset = Preset.CUSTOM, custom = true))
+    }
+
+    fun applyMood(mood: SoundMood, label: String) {
+        val state = _ui.value
+        val bands = ProfileMath.levels(
+            mood.preset,
+            state.bandCount,
+            state.minLevel,
+            state.maxLevel,
+        )
+        commit(
+            state.profile.copy(
+                preset = mood.preset,
+                bands = bands,
+                bassBoost = mood.bassBoost.coerceIn(0, 1_000),
+                virtualizer = mood.virtualizer.coerceIn(0, 1_000),
+                loudness = mood.loudness.coerceIn(0, 1_000),
+                reverb = mood.reverb.coerceIn(0, 6),
+                custom = false,
+            ),
+        )
+        setMessage("$label applied")
     }
 
     fun setPreset(preset: Preset) {

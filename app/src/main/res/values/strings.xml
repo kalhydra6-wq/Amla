@@ -34,4 +34,22 @@
     <string name="background_minutes">%1$d min</string>
     <string name="background_keep_alive">Keep EQ active in background</string>
     <string name="background_keep_alive_subtitle">Only used with Always on mode</string>
+
+    <string name="mood_title">Desi sound moods</string>
+    <string name="mood_info">Tap a mood to change the sound instantly. Each mood is just a ready-made combination of the EQ, bass, surround, loudness and reverb you already know — nothing is downloaded.</string>
+    <string name="mood_chai_time">Chai Time</string>
+    <string name="mood_chai_time_desc">Garam, soft aur acoustic</string>
+    <string name="mood_raat_drive">Raat ki Drive</string>
+    <string name="mood_raat_drive_desc">Deep bass, late nights</string>
+    <string name="mood_gym_beast">Gym Beast</string>
+    <string name="mood_gym_beast_desc">Full power, full focus</string>
+    <string name="mood_baarish">Baarish</string>
+    <string name="mood_baarish_desc">Wide and calm</string>
+    <string name="mood_padhai_focus">Padhai Focus</string>
+    <string name="mood_padhai_focus_desc">Clear voice, less bass</string>
+    <string name="mood_mehfil">Mehfil</string>
+    <string name="mood_mehfil_desc">Party-ready punch</string>
+    <string name="mood_bhajan_shanti">Bhajan Shanti</string>
+    <string name="mood_bhajan_shanti_desc">Calm and spacious</string>
+    <string name="mood_applied">%1$s applied</string>
 </resources>

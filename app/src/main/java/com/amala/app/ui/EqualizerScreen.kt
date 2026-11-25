@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
@@ -37,14 +39,19 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.amala.app.R
 import com.amala.app.model.DeviceCategory
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
 import com.amala.app.model.ReverbPreset
+import com.amala.app.model.SoundMood
+import com.amala.app.model.SoundMoods
 import com.amala.app.viewmodel.MainViewModel
 
 @Composable
@@ -59,6 +66,7 @@ fun EqualizerScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         }
         item { DeviceCard(ui, viewModel) }
         item { MasterCard(ui, viewModel) }
+        item { MoodCard(viewModel) }
         item { PresetCard(ui, viewModel) }
         item { BandsCard(ui, viewModel) }
         item { ExtrasCard(ui, viewModel) }
@@ -192,6 +200,77 @@ private fun MasterCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
             }
         }
     }
+}
+
+@Composable
+private fun MoodCard(viewModel: MainViewModel) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.mood_title), style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                stringResource(R.string.mood_info),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(SoundMoods.all, key = { it.key }) { mood ->
+                    Surface(
+                        onClick = { viewModel.applyMood(mood, moodLabel(mood)) },
+                        shape = MaterialTheme.shapes.medium,
+                        color = Color(mood.colorHex),
+                        modifier = Modifier.size(width = 148.dp, height = 104.dp),
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text(
+                                moodLabel(mood),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = Color.White,
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                moodDescription(mood),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.85f),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun moodLabel(mood: SoundMood): String = when (mood.key) {
+    "chai_time" -> stringResource(R.string.mood_chai_time)
+    "raat_drive" -> stringResource(R.string.mood_raat_drive)
+    "gym_beast" -> stringResource(R.string.mood_gym_beast)
+    "baarish" -> stringResource(R.string.mood_baarish)
+    "padhai_focus" -> stringResource(R.string.mood_padhai_focus)
+    "mehfil" -> stringResource(R.string.mood_mehfil)
+    else -> stringResource(R.string.mood_bhajan_shanti)
+}
+
+@Composable
+private fun moodDescription(mood: SoundMood): String = when (mood.key) {
+    "chai_time" -> stringResource(R.string.mood_chai_time_desc)
+    "raat_drive" -> stringResource(R.string.mood_raat_drive_desc)
+    "gym_beast" -> stringResource(R.string.mood_gym_beast_desc)
+    "baarish" -> stringResource(R.string.mood_baarish_desc)
+    "padhai_focus" -> stringResource(R.string.mood_padhai_focus_desc)
+    "mehfil" -> stringResource(R.string.mood_mehfil_desc)
+    else -> stringResource(R.string.mood_bhajan_shanti_desc)
 }
 
 @Composable
