@@ -22,4 +22,16 @@
     <string name="reset_theme_message">Return to Amla Green with the Dark theme? Your other settings and profiles are kept.</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
+
+    <string name="paused_notification_title">Amla is paused</string>
+    <string name="paused_notification_text">Tap to turn the equalizer on</string>
+    <string name="background_title">Background</string>
+    <string name="background_info">Always on keeps the equalizer running even when Amla is closed, with a persistent notification. Smart runs the service only while audio is playing and stops it after silence. Manual starts only when you switch Amla on; swiping Amla away from Recents stops everything.</string>
+    <string name="background_mode_always">Always on</string>
+    <string name="background_mode_smart">Smart</string>
+    <string name="background_mode_manual">Manual</string>
+    <string name="background_idle">Stop after silence</string>
+    <string name="background_minutes">%1$d min</string>
+    <string name="background_keep_alive">Keep EQ active in background</string>
+    <string name="background_keep_alive_subtitle">Only used with Always on mode</string>
 </resources>

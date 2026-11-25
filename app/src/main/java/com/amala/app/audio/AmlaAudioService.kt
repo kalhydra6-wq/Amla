@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.media.AudioPlaybackConfiguration
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -21,6 +22,7 @@ import com.amala.app.data.AmlaPreferences
 import com.amala.app.data.SharedPreferencesStore
 import com.amala.app.ui.AmlaTileService
 import com.amala.app.ui.AmlaWidget
+import com.amala.app.model.BackgroundMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,6 +37,25 @@ class AmlaAudioService : Service() {
     private val audioManager by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     private val deviceHandler = Handler(Looper.getMainLooper())
     private var ignoreFirstDeviceEvent = true
+    private val idleHandler = Handler(Looper.getMainLooper())
+    private val stopRunnable = Runnable { stopSelf() }
+    private val playbackCallback = object : AudioManager.AudioPlaybackCallback() {
+        override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
+            val playing = configs?.any { it.isActive } == true
+            if (playing) {
+                idleHandler.removeCallbacks(stopRunnable)
+            } else {
+                scheduleIdleStopIfNeeded()
+            }
+        }
+    }
+
+    private fun scheduleIdleStopIfNeeded() {
+        val prefs = AmlaPreferences(SharedPreferencesStore(applicationContext))
+        if (prefs.backgroundMode != BackgroundMode.SMART) return
+        idleHandler.removeCallbacks(stopRunnable)
+        idleHandler.postDelayed(stopRunnable, prefs.smartIdleMinutes * 60_000L)
+    }
     private val deviceCallback = object : AudioDeviceCallback() {
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) = onDeviceChange()
         override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) = onDeviceChange()
@@ -58,6 +79,11 @@ class AmlaAudioService : Service() {
         createChannel()
         startForegroundCompat()
         runCatching { audioManager.registerAudioDeviceCallback(deviceCallback, deviceHandler) }
+        runCatching { audioManager.registerAudioPlaybackCallback(playbackCallback, deviceHandler) }
+        runCatching {
+            getSystemService(NotificationManager::class.java).cancel(PAUSED_NOTIFICATION_ID)
+        }
+        scheduleIdleStopIfNeeded()
         scope.launch {
             while (true) {
                 delay(REAPPLY_INTERVAL_MS)
@@ -78,6 +104,7 @@ class AmlaAudioService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_START -> startForegroundCompat()
             ACTION_TOGGLE -> AudioController.toggleEnabled()
             ACTION_PREV -> AudioController.cyclePreset(-1)
             ACTION_NEXT -> AudioController.cyclePreset(1)
@@ -96,6 +123,8 @@ class AmlaAudioService : Service() {
 
     override fun onDestroy() {
         runCatching { audioManager.unregisterAudioDeviceCallback(deviceCallback) }
+        runCatching { audioManager.unregisterAudioPlaybackCallback(playbackCallback) }
+        idleHandler.removeCallbacks(stopRunnable)
         SoftStartController.cancel()
         scope.cancel()
         super.onDestroy()
@@ -169,6 +198,36 @@ class AmlaAudioService : Service() {
         private const val NOTIFICATION_ID = 1001
         private const val REAPPLY_INTERVAL_MS = 5_000L
         private const val ACTION_STOP = "com.amala.app.STOP_SERVICE"
+        private const val ACTION_START = "com.amala.app.START_SERVICE"
+        private const val PAUSED_NOTIFICATION_ID = 1002
+
+        fun showPausedNotification(context: Context) {
+            val manager = runCatching {
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            }.getOrNull() ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.notification_channel),
+                    NotificationManager.IMPORTANCE_LOW,
+                )
+                runCatching { manager.createNotificationChannel(channel) }
+            }
+            val intent = PendingIntent.getService(
+                context,
+                9,
+                Intent(context, AmlaAudioService::class.java).setAction(ACTION_START),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_amla)
+                .setContentTitle(context.getString(R.string.paused_notification_title))
+                .setContentText(context.getString(R.string.paused_notification_text))
+                .setContentIntent(intent)
+                .setAutoCancel(true)
+                .build()
+            runCatching { manager.notify(PAUSED_NOTIFICATION_ID, notification) }
+        }
         private const val ACTION_TOGGLE = "com.amala.app.NOTIF_TOGGLE"
         private const val ACTION_PREV = "com.amala.app.NOTIF_PREV"
         private const val ACTION_NEXT = "com.amala.app.NOTIF_NEXT"
@@ -177,10 +236,15 @@ class AmlaAudioService : Service() {
 
         fun start(context: Context) {
             val intent = Intent(context, AmlaAudioService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (ex: IllegalStateException) {
+                // Android 12+ blocks background FGS starts; ask the user to tap a notification.
+                showPausedNotification(context)
             }
         }
 

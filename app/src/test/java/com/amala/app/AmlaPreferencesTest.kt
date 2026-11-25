@@ -2,6 +2,7 @@ package com.amala.app
 
 import com.amala.app.data.AmlaPreferences
 import com.amala.app.model.EqualizerProfile
+import com.amala.app.model.BackgroundMode
 import com.amala.app.model.Preset
 import com.amala.app.model.ThemeMode
 import org.junit.Assert.assertEquals
@@ -20,6 +21,29 @@ class AmlaPreferencesTest {
     fun setUp() {
         store = InMemoryStore()
         preferences = AmlaPreferences(store)
+    }
+
+    @Test
+    fun `fresh install defaults to Smart background mode`() {
+        preferences.migrateBackgroundOnce()
+        assertEquals(BackgroundMode.SMART, preferences.backgroundMode)
+        assertEquals(2, preferences.smartIdleMinutes)
+    }
+
+    @Test
+    fun `existing install keeps Always on background mode`() {
+        store.putBoolean("setting:auto_apply", true)
+        preferences.migrateBackgroundOnce()
+        assertEquals(BackgroundMode.ALWAYS, preferences.backgroundMode)
+    }
+
+    @Test
+    fun `background choice survives repeated migration`() {
+        preferences.backgroundMode = BackgroundMode.MANUAL
+        preferences.smartIdleMinutes = 10
+        preferences.migrateBackgroundOnce()
+        assertEquals(BackgroundMode.MANUAL, preferences.backgroundMode)
+        assertEquals(10, preferences.smartIdleMinutes)
     }
 
     @Test

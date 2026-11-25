@@ -1,5 +1,6 @@
 package com.amala.app.data
 
+import com.amala.app.model.BackgroundMode
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
 import com.amala.app.model.ProfileMath
@@ -8,6 +9,25 @@ import com.amala.app.model.ThemeMode
 
 /** Stores one EQ profile per output device plus global app settings. */
 class AmlaPreferences(private val store: KeyValueStore) {
+
+    /** Existing installs keep today's Always-on behaviour; fresh installs use Smart. */
+    fun migrateBackgroundOnce() {
+        if (store.getInt(KEY_BACKGROUND_MIGRATION_VERSION, 0) >= BACKGROUND_MIGRATION_VERSION) return
+        val existingInstall = store.keys().any { it !in setOf(KEY_BACKGROUND_MIGRATION_VERSION) }
+        store.putString(
+            KEY_BACKGROUND_MODE,
+            if (existingInstall) BackgroundMode.ALWAYS.name else BackgroundMode.SMART.name,
+        )
+        store.putInt(KEY_BACKGROUND_MIGRATION_VERSION, BACKGROUND_MIGRATION_VERSION)
+    }
+
+    var backgroundMode: BackgroundMode
+        get() = BackgroundMode.fromKey(store.getString(KEY_BACKGROUND_MODE, null))
+        set(value) = store.putString(KEY_BACKGROUND_MODE, value.name)
+
+    var smartIdleMinutes: Int
+        get() = store.getInt(KEY_SMART_IDLE_MINUTES, 2).takeIf { it in listOf(1, 2, 5, 10) } ?: 2
+        set(value) = store.putInt(KEY_SMART_IDLE_MINUTES, value.takeIf { it in listOf(1, 2, 5, 10) } ?: 2)
 
     var themeMode: ThemeMode
         get() = ThemeMode.fromKey(store.getString(KEY_THEME_MODE, null))
@@ -135,6 +155,10 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val KEY_ACCENT_COLOR = "appearance:accent_color"
         private const val KEY_SIGNAL_CHAIN = "appearance:signal_chain"
         private const val KEY_THEME_MIGRATION_VERSION = "appearance:theme_migration_version"
+        private const val KEY_BACKGROUND_MODE = "background:mode"
+        private const val KEY_SMART_IDLE_MINUTES = "background:smart_idle_minutes"
+        private const val KEY_BACKGROUND_MIGRATION_VERSION = "background:migration_version"
+        private const val BACKGROUND_MIGRATION_VERSION = 1
         const val DEFAULT_ACCENT = 0xFF007C70.toInt()
         const val AMLA_GREEN = 0xFF4C9A2A.toInt()
         const val AMLA_PURPLE = 0xFF6D4BC4.toInt()

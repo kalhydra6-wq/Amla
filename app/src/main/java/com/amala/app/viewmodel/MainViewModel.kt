@@ -13,6 +13,7 @@ import com.amala.app.audio.SoftStartController
 import com.amala.app.data.AmlaPreferences
 import com.amala.app.data.SharedPreferencesStore
 import com.amala.app.model.AudioDevice
+import com.amala.app.model.BackgroundMode
 import com.amala.app.model.AudioDevices
 import com.amala.app.model.EqualizerProfile
 import com.amala.app.model.Preset
@@ -36,6 +37,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val maxLevel: Int = DEFAULT_MAX,
         val frequencies: List<Int> = listOf(60, 230, 910, 3_600, 14_000),
         val autoApply: Boolean = true,
+        val backgroundMode: BackgroundMode = BackgroundMode.ALWAYS,
+        val smartIdleMinutes: Int = 2,
         val softStartEnabled: Boolean = true,
         val softStartSeconds: Int = 2,
         val effectsEnabled: Boolean = true,
@@ -78,6 +81,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             signalChainEnabled = preferences.signalChainEnabled,
             crashReport = crash,
             autoApply = preferences.autoApply,
+            backgroundMode = preferences.backgroundMode,
+            smartIdleMinutes = preferences.smartIdleMinutes,
             softStartEnabled = preferences.softStartEnabled,
             softStartSeconds = preferences.softStartSeconds,
             effectsEnabled = AudioController.enabled,
@@ -362,6 +367,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _ui.update { it.copy(abCompareActive = true, totalBoostDb = 0f) }
             setMessage("A/B on · flat curve (tap again to restore)")
         }
+    }
+
+    fun setBackgroundMode(mode: BackgroundMode) {
+        preferences.backgroundMode = mode
+        _ui.update { it.copy(backgroundMode = mode) }
+        if (mode == BackgroundMode.MANUAL) {
+            AmlaAudioService.stop(getApplication())
+        } else {
+            AmlaAudioService.start(getApplication())
+        }
+    }
+
+    fun setSmartIdleMinutes(minutes: Int) {
+        preferences.smartIdleMinutes = minutes
+        _ui.update { it.copy(smartIdleMinutes = minutes) }
     }
 
     fun setKeepAlive(enabled: Boolean) {

@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.amala.app.R
+import com.amala.app.model.BackgroundMode
 import com.amala.app.viewmodel.MainViewModel
 
 @Composable
@@ -36,6 +37,8 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
         item {
             Text("Settings", style = MaterialTheme.typography.titleLarge)
         }
+
+        item { BackgroundCard(ui, viewModel) }
 
         item { SoftStartCard(ui, viewModel) }
 
@@ -62,10 +65,10 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                         checked = ui.autoGainProtection,
                     ) { viewModel.setAutoGainProtection(it) }
                     SettingRow(
-                        title = "Keep EQ active in background",
-                        subtitle = "Reapplies your sound when other apps change it, so it works across all players",
-                        checked = ui.keepAlive,
-                    ) { viewModel.setKeepAlive(it) }
+                        title = stringResource(R.string.background_keep_alive),
+                        subtitle = stringResource(R.string.background_keep_alive_subtitle),
+                        checked = ui.backgroundMode == BackgroundMode.ALWAYS,
+                    ) { viewModel.setBackgroundMode(if (it) BackgroundMode.ALWAYS else BackgroundMode.SMART) }
                     SettingRow(
                         title = "Enable audio effects",
                         subtitle = "Bypass or engage the equalizer instantly",
@@ -187,6 +190,59 @@ fun SettingsScreen(ui: MainViewModel.UiState, viewModel: MainViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackgroundCard(ui: MainViewModel.UiState, viewModel: MainViewModel) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.background_title), style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.background_info),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                BackgroundMode.entries.forEach { mode ->
+                    val label = when (mode) {
+                        BackgroundMode.ALWAYS -> stringResource(R.string.background_mode_always)
+                        BackgroundMode.SMART -> stringResource(R.string.background_mode_smart)
+                        BackgroundMode.MANUAL -> stringResource(R.string.background_mode_manual)
+                    }
+                    FilterChip(
+                        selected = ui.backgroundMode == mode,
+                        onClick = { viewModel.setBackgroundMode(mode) },
+                        label = { Text(label) },
+                    )
+                }
+            }
+            if (ui.backgroundMode == BackgroundMode.SMART) {
+                Spacer(Modifier.height(12.dp))
+                Text(stringResource(R.string.background_idle), style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(1, 2, 5, 10).forEach { minutes ->
+                        FilterChip(
+                            selected = ui.smartIdleMinutes == minutes,
+                            onClick = { viewModel.setSmartIdleMinutes(minutes) },
+                            label = { Text(stringResource(R.string.background_minutes, minutes)) },
+                        )
+                    }
+                }
             }
         }
     }

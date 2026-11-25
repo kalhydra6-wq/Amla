@@ -10,9 +10,11 @@ class AmlaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashLogger.install(this)
-        AmlaPreferences(SharedPreferencesStore(this)).migrateThemeOnce()
+        val preferences = AmlaPreferences(SharedPreferencesStore(this))
+        preferences.migrateBackgroundOnce()
+        preferences.migrateThemeOnce()
         AudioController.initialize(this)
-        if (AmlaPreferences(SharedPreferencesStore(this)).keepAlive) {
+        if (preferences.backgroundMode != com.amala.app.model.BackgroundMode.MANUAL) {
             AmlaAudioService.start(this)
         }
     }
