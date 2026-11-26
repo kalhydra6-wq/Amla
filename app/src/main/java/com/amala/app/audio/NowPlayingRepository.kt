@@ -72,6 +72,7 @@ object NowPlayingRepository {
             artist = artist,
             album = album,
             sourceApp = app,
+            sourcePackage = controller.packageName.takeIf { granted },
             artwork = artwork,
             permissionGranted = granted,
             hasSession = true,

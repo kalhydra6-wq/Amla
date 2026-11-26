@@ -10,8 +10,12 @@ import com.amala.app.audio.AudioController
 import com.amala.app.audio.AudioDeviceDetector
 import com.amala.app.audio.AudioEngine
 import com.amala.app.audio.SoftStartController
+import com.amala.app.audio.SoundEventLogger
+import com.amala.app.audio.NowPlayingRepository
 import com.amala.app.data.AmlaPreferences
 import com.amala.app.data.SharedPreferencesStore
+import com.amala.app.data.SoundEvent
+import com.amala.app.data.SoundEventRepository
 import com.amala.app.model.AudioDevice
 import com.amala.app.model.BackgroundMode
 import com.amala.app.model.AudioDevices
@@ -22,6 +26,8 @@ import com.amala.app.model.SoundMood
 import com.amala.app.model.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,6 +44,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val maxLevel: Int = DEFAULT_MAX,
         val frequencies: List<Int> = listOf(60, 230, 910, 3_600, 14_000),
         val autoApply: Boolean = true,
+        val learnHabits: Boolean = false,
+        val learnRetentionDays: Int = 90,
         val backgroundMode: BackgroundMode = BackgroundMode.ALWAYS,
         val smartIdleMinutes: Int = 2,
         val softStartEnabled: Boolean = true,
@@ -73,6 +81,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
+    val soundEvents: StateFlow<List<SoundEvent>> = SoundEventRepository.recent()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         val crash = CrashLogger.read(getApplication())
         if (crash != null && listOf("SignalChain", "NowPlaying", "UsbDevice", "MediaSession").any { it in crash }) {
@@ -82,6 +93,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             signalChainEnabled = preferences.signalChainEnabled,
             crashReport = crash,
             autoApply = preferences.autoApply,
+            learnHabits = preferences.learnHabits,
+            learnRetentionDays = preferences.learnRetentionDays,
             backgroundMode = preferences.backgroundMode,
             smartIdleMinutes = preferences.smartIdleMinutes,
             softStartEnabled = preferences.softStartEnabled,
@@ -118,6 +131,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         storedProfiles = preferences.storedProfiles(),
                     )
                 }
+            }
+        }
+
+        if (preferences.learnHabits) {
+            viewModelScope.launch {
+                SoundEventRepository.deleteOlderThan(
+                    System.currentTimeMillis() - preferences.learnRetentionDays * 86_400_000L,
+                )
             }
         }
 
@@ -280,6 +301,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setSoftStartSeconds(seconds: Int) {
         preferences.softStartSeconds = seconds
         _ui.update { it.copy(softStartSeconds = seconds) }
+    }
+
+    fun setLearnHabits(enabled: Boolean) {
+        preferences.learnHabits = enabled
+        _ui.update { it.copy(learnHabits = enabled) }
+        if (!enabled) SoundEventLogger.cancel()
+    }
+
+    fun setLearnRetentionDays(days: Int) {
+        preferences.learnRetentionDays = days
+        _ui.update { it.copy(learnRetentionDays = days) }
+        viewModelScope.launch {
+            SoundEventRepository.deleteOlderThan(System.currentTimeMillis() - days * 86_400_000L)
+        }
+    }
+
+    fun deleteAllEvents() {
+        viewModelScope.launch { SoundEventRepository.deleteAll() }
     }
 
     fun setAutoApply(enabled: Boolean) {
@@ -448,6 +487,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun commit(profile: EqualizerProfile) {
+        val previous = _ui.value.profile
         val base = profile.copy(enabled = true)
         val adjusted = if (_ui.value.autoGainProtection) {
             base.copy(preamp = ProfileMath.compensatedPreamp(base))
@@ -462,6 +502,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
         profileBeforeCompare = null
+        val device = _ui.value.selectedDevice ?: _ui.value.activeDevice
+        SoundEventLogger.schedule(
+            preferences.learnHabits,
+            SoundEventLogger.contextOf(
+                device?.category?.displayName,
+                device?.id,
+                NowPlayingRepository.state.value.sourcePackage,
+            ),
+            previous,
+            adjusted,
+        )
         AudioController.setProfile(adjusted, _ui.value.selectedDevice?.id)
         _ui.update {
             it.copy(

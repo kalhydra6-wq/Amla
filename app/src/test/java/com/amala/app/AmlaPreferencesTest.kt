@@ -79,6 +79,8 @@ class AmlaPreferencesTest {
         assertTrue(preferences.effectsEnabled)
         assertTrue(preferences.autoGainProtection)
         assertTrue(preferences.softStartEnabled)
+        org.junit.Assert.assertFalse(preferences.learnHabits)
+        assertEquals(90, preferences.learnRetentionDays)
         assertEquals(2, preferences.softStartSeconds)
         assertEquals(ThemeMode.FOLLOW_SYSTEM, preferences.themeMode)
         assertEquals(0xFF007C70.toInt(), preferences.accentColor)

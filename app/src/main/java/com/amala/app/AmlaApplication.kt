@@ -13,6 +13,7 @@ class AmlaApplication : Application() {
         val preferences = AmlaPreferences(SharedPreferencesStore(this))
         preferences.migrateBackgroundOnce()
         preferences.migrateThemeOnce()
+        com.amala.app.data.SoundEventRepository.initialize(this)
         AudioController.initialize(this)
         if (preferences.backgroundMode != com.amala.app.model.BackgroundMode.MANUAL) {
             AmlaAudioService.start(this)

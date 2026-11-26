@@ -52,4 +52,22 @@
     <string name="mood_bhajan_shanti">Bhajan Shanti</string>
     <string name="mood_bhajan_shanti_desc">Calm and spacious</string>
     <string name="mood_applied">%1$s applied</string>
+
+    <string name="awaaz_title">Meri Awaaz</string>
+    <string name="awaaz_intro">Amla learns your sound habits on your phone only. Nothing leaves your phone.</string>
+    <string name="awaaz_learn">Learn my habits</string>
+    <string name="awaaz_learn_info">When on, Amla remembers the EQ changes you make. It only suggests — it never changes your sound by itself.</string>
+    <string name="awaaz_enable_title">Learn my habits?</string>
+    <string name="awaaz_enable_message">Amla will save details of the EQ changes you make (device, time, app if allowed) in a local database. Nothing is uploaded. You can delete everything anytime, and suggestions always need your approval.</string>
+    <string name="awaaz_see">See what Amla remembers</string>
+    <string name="awaaz_delete">Delete everything</string>
+    <string name="awaaz_delete_message">Delete all saved sound events from this phone?</string>
+    <string name="awaaz_retention">Keep data for</string>
+    <string name="awaaz_days">%1$d days</string>
+    <string name="awaaz_no_events">Nothing saved yet. Move an EQ slider and wait a few seconds.</string>
+    <string name="awaaz_counts">Counts: device / app / hour</string>
+    <string name="awaaz_event">%1$s · %2$s %3$s → %4$s dB</string>
+    <string name="awaaz_hide">Hide details</string>
+    <string name="awaaz_unknown">unknown</string>
+    <string name="awaaz_event_band">band %1$d</string>
 </resources>

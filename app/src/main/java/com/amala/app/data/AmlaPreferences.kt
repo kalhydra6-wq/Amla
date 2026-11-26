@@ -25,6 +25,14 @@ class AmlaPreferences(private val store: KeyValueStore) {
         store.putInt(KEY_BACKGROUND_MIGRATION_VERSION, BACKGROUND_MIGRATION_VERSION)
     }
 
+    var learnHabits: Boolean
+        get() = store.getBoolean(KEY_LEARN_HABITS, false)
+        set(value) = store.putBoolean(KEY_LEARN_HABITS, value)
+
+    var learnRetentionDays: Int
+        get() = store.getInt(KEY_LEARN_RETENTION, 90).takeIf { it in listOf(30, 90, 365) } ?: 90
+        set(value) = store.putInt(KEY_LEARN_RETENTION, value.takeIf { it in listOf(30, 90, 365) } ?: 90)
+
     var backgroundMode: BackgroundMode
         get() = BackgroundMode.fromKey(store.getString(KEY_BACKGROUND_MODE, null))
         set(value) = store.putString(KEY_BACKGROUND_MODE, value.name)
@@ -159,6 +167,8 @@ class AmlaPreferences(private val store: KeyValueStore) {
         private const val KEY_ACCENT_COLOR = "appearance:accent_color"
         private const val KEY_SIGNAL_CHAIN = "appearance:signal_chain"
         private const val KEY_THEME_MIGRATION_VERSION = "appearance:theme_migration_version"
+        private const val KEY_LEARN_HABITS = "learn:enabled"
+        private const val KEY_LEARN_RETENTION = "learn:retention_days"
         private const val KEY_BACKGROUND_MODE = "background:mode"
         private const val KEY_SMART_IDLE_MINUTES = "background:smart_idle_minutes"
         private const val KEY_BACKGROUND_MIGRATION_VERSION = "background:migration_version"

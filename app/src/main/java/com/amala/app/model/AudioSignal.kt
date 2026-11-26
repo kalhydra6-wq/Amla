@@ -9,6 +9,7 @@ data class NowPlayingInfo(
     val artist: String? = null,
     val album: String? = null,
     val sourceApp: String? = null,
+    val sourcePackage: String? = null,
     val artwork: Any? = null,
     val permissionGranted: Boolean = false,
     val hasSession: Boolean = false,
